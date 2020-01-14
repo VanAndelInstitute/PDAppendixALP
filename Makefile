@@ -11,7 +11,10 @@ objects=\
   Brain_OFB_Padlock_CGonly/index.html \
   Brain_PFCRep_Padlock_withGLU/index.html \
   Brain_PFCRep_Padlock_withGLU_Braak/index.html \
-  Brain_AgeAcceleration_Padlock
+  Brain_AgeAcceleration_Padlock/index.html \
+  Discover_Pathways/index.html \
+  Results_Appendix/index.html \
+  Figure1/index.html
 
 all: navbar $(objects)
 

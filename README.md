@@ -27,5 +27,7 @@ What to do:
 
 - make run
 
+And open at http://localhost:3838/
+
 ## Contact
 
