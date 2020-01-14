@@ -1,6 +1,105 @@
 [
 	{
-		"title": "Appendix",
-		"url": "../IndexPage/"
+		"title": "Data processing",
+		"children": [
+			{
+				"title": "Appendix PD vs Controls (bisulfite)",
+				"url": ""
+			},
+			{
+				"title": "Appendix PD vs Controls (RNA-seq)",
+				"url": ""
+			},
+			{
+				"title": "Olfactory bulb PD vs Controls (bisulfite)",
+				"url": ""
+			},
+			{
+				"title": "Prefrontal cortex PD vs Controls (bisulfite)",
+				"url": ""
+			},
+			{
+				"title": "Prefrontal cortex PD vs Controls stagewise (bisulfite)",
+				"url": ""
+			},
+			{
+				"title": "Prefrontal cortex replicate PD vs Controls (bisulfite)",
+				"url": ""
+			},
+			{
+				"title": "Appendix Aging (bisulfite)",
+				"url": ""
+			},
+			{
+				"title": "Appendix Aging (RNA-seq)",
+				"url": ""
+			},
+			{
+				"title": "Prefrontal cortex aging (bisulfite)",
+				"url": "../Brain_AgeAcceleration_Padlock/"
+			},
+			{
+				"title": "Mice cecal catch (bisulfite)",
+				"url": "../Mice_CecalPatch_Padlock/"
+			},
+			{
+				"title": "Mice DSS (bisulfite)",
+				"url": "../Mice_DSS_Padlock/"
+			}					
+		]
+	},
+	{
+		"title": "Results",
+		"children": [
+			{
+				"title": "Appendix",
+				"url": "../Results_Appendix/"
+			},
+			{
+				"title": "Brain",
+				"url": "../Results_Brain/"
+			},
+			{
+				"title": "Proteomics",
+				"url": "../Results_Proteomics/"
+			},			
+			{
+				"title": "Aging",
+				"url": "../Results_Aging/"
+			},
+			{
+				"title": "Mice",
+				"url": "../Results_Mice/"
+			},
+			{
+				"title": "etc",
+				"url": "../Results_etc/"
+			}
+		]
+	},
+	{
+		"title":"Figures",
+		"children": [
+			{
+				"title":"Figure 1",
+				"url":"../Figure1/"
+			},
+			{
+				"title":"Figure 2",
+				"url":"../Figure2/"
+			},
+			{
+				"title":"Figure 3",
+				"url":"../Figure3/"
+			},
+			{
+				"title":"Figure 4",
+				"url":"../Figure4/"
+			},
+			{
+				"title":"Figure 5",
+				"url":"../Figure5/"
+			}
+		]
 	}
 ]
