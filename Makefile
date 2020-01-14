@@ -1,5 +1,17 @@
 objects=\
 	IndexPage/index.html \
+	Appendix_PDvsControls_Padlock/index.html \
+  Mice_CecalPatch_Padlock/index.html \
+  Mice_DSS_Padlock/index.html \
+  Appendix_PDvsControls_Padlock/index.html \
+  Appendix_PDvsControls_RNAseq/index.html \
+  Appendix_AgeAcceleration_Padlock/index.html \
+  Appendix_AgeAcceleration_RNAseq/index.html \
+  Brain_PFC_Padlock_CGonly/index.html \
+  Brain_OFB_Padlock_CGonly/index.html \
+  Brain_PFCRep_Padlock_withGLU/index.html \
+  Brain_PFCRep_Padlock_withGLU_Braak/index.html \
+  Brain_AgeAcceleration_Padlock
 
 all: navbar $(objects)
 
