@@ -2,9 +2,6 @@
 title: "Figure 2"
 output:
   html_document:
-    toc: true
-    toc_depth: 2
-    toc_float: true
     includes:
       in_header: ../include/in_header.html
       before_body: ../include/before_body.html

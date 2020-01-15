@@ -16,7 +16,9 @@ objects=\
   Results_Appendix/index.html \
   Figure1/index.html \
   Results_Brain/index.html \
-  Figure2/index.html
+  Figure2/index.html \
+  Results_Proteomics/index.html \
+  Figure3/index.html
 
 all: navbar $(objects)
 
