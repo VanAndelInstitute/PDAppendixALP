@@ -415,7 +415,7 @@ ggdraw() +
 ```
 
 
-```{r, include = TRUE, fig.width = 7.2, fig.height = 4.5, dpi = 300}
+```{r, include = TRUE, fig.width = 7.2, fig.height = 4.5, dpi = 300, fig.cap="**Fig. 1. Epigenetic dysregulation of the ALP in the PD appendix, particularly at lysosomal genes.**"}
 # quartz("", 7.2, 4.5)
 legend <- get_legend(pD)
 ggdraw() +

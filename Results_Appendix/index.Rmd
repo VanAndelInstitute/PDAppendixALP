@@ -529,7 +529,7 @@ plotEnrichment(pd)
 
 
 
-## Correlation of fold changes
+# Correlation of fold changes
 
 
 ```{r}
