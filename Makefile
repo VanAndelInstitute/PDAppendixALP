@@ -14,7 +14,8 @@ objects=\
   Brain_AgeAcceleration_Padlock/index.html \
   Discover_Pathways/index.html \
   Results_Appendix/index.html \
-  Figure1/index.html
+  Figure1/index.html \
+  Figure2/index.html
 
 all: navbar $(objects)
 
@@ -41,7 +42,11 @@ runAmiGO:
 	docker run -p 8080:8080 -p 9999:9999 -v ${PWD}:/srv/solr/data -t geneontology/amigo-standalone
 
 run:
-	docker run -p 3838:3838 -v ${PWD}:/srv/shiny-server/myapp:ro vugene/shinyserver
+	mkdir -p tmp/log
+	docker run -p 3838:3838 \
+	-v ${PWD}:/srv/shiny-server/myapp:ro \
+	-v ${PWD}/tmp/log:/var/log/shiny-server:Z \
+	vugene/shinyserver
 
 
 exportenv:
