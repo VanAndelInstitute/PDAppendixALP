@@ -20,7 +20,9 @@ objects=\
   Results_Proteomics/index.html \
   Figure3/index.html \
   Results_Aging/index.html \
-  Figure4/index.html
+  Figure4/index.html \
+  Results_Mice/index.html \
+  Figure5/index.html
 
 all: navbar $(objects)
 
