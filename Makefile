@@ -15,6 +15,7 @@ objects=\
   Discover_Pathways/index.html \
   Results_Appendix/index.html \
   Figure1/index.html \
+  Results_Brain/index.html \
   Figure2/index.html
 
 all: navbar $(objects)

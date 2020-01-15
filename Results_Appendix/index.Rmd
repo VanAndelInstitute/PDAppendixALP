@@ -47,7 +47,7 @@ n <- apx[adj.P.Val < 0.05, length(unique(Gene))]
 glue("- Number of genes affected {n}")
 ```
 
-Dominant direction of modification:
+Dominant direction of methylation:
 
 ```{r, include=TRUE}
 t <-
