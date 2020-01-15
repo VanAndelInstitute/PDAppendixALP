@@ -125,7 +125,6 @@ bed2 <- pd[, list(Chr, Start, End,
                   P.PFCR, P.PFC,
                   P.OFB, P.APP)]
 
-# myhallmarks <- hallmarks[order(Score), Gene][1:20]
 myhallmarks <- hallmarks[order(Score), Gene][1:40]
 bed3 <- pfcr[Gene %in% myhallmarks, list(unique(Chr), min(SNP), max(SNP)), Gene] %>% 
     .[, list(Chr = V1, Start = V2, End = V3, Label = Gene, Type = 1)] %>%
