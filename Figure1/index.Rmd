@@ -20,8 +20,9 @@ require("ggrepel")
 require("biomaRt")
 require("GO.db")
 require("cowplot")
-require("magick")
 require('broom')
+require('pacman')
+p_load('magick')
 source("../code/common.R", chdir=TRUE)
 
 meth <- fread(

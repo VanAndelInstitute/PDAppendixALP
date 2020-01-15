@@ -34,3 +34,11 @@ texP <- function(p, digits=2, scthreshold = 0.01) {
 
 # texP(c(0.1, 0.05, 0.01, NA, 0.0001), digits=1)
 
+
+texPstars <- function(pstars) {
+	factor(pstars, 
+         levels = c("***", "**", "*", ".", ""),
+         labels = c("\\*\\*\\*", "\\*\\*", "\\*", "$\\cdot$", " ")
+       )
+}
+
