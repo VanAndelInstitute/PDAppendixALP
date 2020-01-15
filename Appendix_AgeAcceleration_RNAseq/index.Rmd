@@ -13,9 +13,6 @@ runtime: shiny_prerendered
 ---
 <!-- # (c)  Juozas Gordevičius -->
 
-```{r setup, include=FALSE, echo=FALSE}
-
-```
 
 
 ```{r, include=FALSE}
