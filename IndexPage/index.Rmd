@@ -21,36 +21,33 @@ source("../code/common.R")
 
 - [Website of data analysis results](http://www.vugene.eu/VAI/pdappendixalp/)
 
-- [Full tarball of the code and analysis data files](www/archive_20200115.tar.gz)
-
 
 # Running the analysis on local machine
 
 - Install conda 
 - Install docker
-- Download the code and data files
+- [Download the tarball of code and data](www/archive_20200115.tar.gz)
 
-
-Create execution environment
+Create execution environment:
 
 <pre><code>
 make importenv
 conda activate ALP
 </code></pre>
 
-Repeat all analyses by running R and Rmd scripts
+Repeat all analyses by running R and Rmd scripts:
 
 <pre><code>
 make all
 </code></pre>
 
-Build a shiny-server docker container
+Build a shiny-server docker container:
 
 <pre><code>
 make -C shinyserver all
 </code></pre>
 
-Run the results website
+Run the results website:
 
 <pre><code>
 make run

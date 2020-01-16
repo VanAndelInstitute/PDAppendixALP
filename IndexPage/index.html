@@ -213,7 +213,6 @@ summary {
 <ul>
 <li><p><a href="http://git.vugene.eu/gordevicius/pdappendixalp">Source code</a></p></li>
 <li><p><a href="http://www.vugene.eu/VAI/pdappendixalp/">Website of data analysis results</a></p></li>
-<li><p><a href="www/archive_20200115.tar.gz">Full tarball of the code and analysis data files</a></p></li>
 </ul>
 </div>
 <div id="section-running-the-analysis-on-local-machine" class="section level1">
@@ -221,22 +220,22 @@ summary {
 <ul>
 <li>Install conda</li>
 <li>Install docker</li>
-<li>Download the code and data files</li>
+<li><a href="www/archive_20200115.tar.gz">Download the tarball of code and data</a></li>
 </ul>
-<p>Create execution environment</p>
+<p>Create execution environment:</p>
 <pre><code>
 make importenv
 conda activate ALP
 </code></pre>
-<p>Repeat all analyses by running R and Rmd scripts</p>
+<p>Repeat all analyses by running R and Rmd scripts:</p>
 <pre><code>
 make all
 </code></pre>
-<p>Build a shiny-server docker container</p>
+<p>Build a shiny-server docker container:</p>
 <pre><code>
 make -C shinyserver all
 </code></pre>
-<p>Run the results website</p>
+<p>Run the results website:</p>
 <pre><code>
 make run
 </code></pre>
