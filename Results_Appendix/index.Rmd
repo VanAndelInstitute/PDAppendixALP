@@ -125,7 +125,8 @@ dtlist[[2]] %>%
 select(estimate=OR, 
        p.value=P, 
        conf.low=Lo, 
-       conf.high=Hi, 
+       conf.high=Hi,
+       type=Type, 
        category=Category, 
        p_stars = `P < 0.05`) %>%
 kable() %>%
@@ -546,7 +547,7 @@ dt2 <-
 
 ```
 
-N = `r nrow(dt2)`.
+N = `r nrow(dt2)` genes.
 
 ```{r, include=TRUE}
 dt2[, wtd.cor(V1, V2, weight=-log(V3))] %>%
