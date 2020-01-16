@@ -84,28 +84,6 @@ n <- protApx[Reliable == TRUE & abs(FC) > 0.2, .N]
 glue("- Number of altered proteins {n}")
 ```
 
-Dominant direction of change
-
-```{r, include=TRUE}
-t <-
-	protApx[, list(
-						Changed = ifelse(Reliable == TRUE & abs(FC) > 0.2, "Changed", "NS"), 
-					 	Direction = ifelse(FC < 0, "Down", "Up")
-					 )] %>%
-	.[, table(Changed, Direction)] %>%
-	.[c("NS", "Changed"), c("Down", "Up")]
-
-# Show the table
-knitr::kable(t) %>%
-kable_styling(bootstrap_options = c("hover"),
-							full_width = FALSE)
-
-# Show fisher test result
-t %>% fisher.test %>% 
-tidy() %>%
-kable() %>%
-kable_styling(bootstrap_options = c("hover"))
-```
 
 ```{r}
 if (!dir.exists("www")) dir.create("www")
@@ -128,37 +106,6 @@ n <- protPfc[, .N]
 glue("- Number of proteins investigated {n}")
 n <- protPfc[Reliable == TRUE & abs(FC) > 0.2, .N]
 glue("- Number of altered proteins {n}")
-```
-
-Dominant direction of change
-
-```{r, include=TRUE}
-t <-
-	protPfc[, list(
-						Changed = ifelse(Reliable == TRUE & abs(FC) > 0.2, "Changed", "NS"), 
-					 	Direction = ifelse(FC < 0, "Down", "Up")
-					 )] %>%
-	.[, table(Changed, Direction)] %>%
-	.[c("NS", "Changed"), c("Down", "Up")]
-
-# Show the table
-knitr::kable(t) %>%
-kable_styling(bootstrap_options = c("hover"),
-							full_width = FALSE)
-
-# Show fisher test result
-t %>% fisher.test %>% 
-tidy() %>%
-kable() %>%
-kable_styling(bootstrap_options = c("hover"))
-```
-
-```{r}
-protPfc[Reliable == TRUE & abs(FC) > 0.2] %>%
-  select(-Reliable) %>% 
-  fwrite(file = "www/protPfc.csv")
-url <- "./www/protPfc.csv"
-stopifnot(file.exists(url))
 ```
 
 - **[Additional file 10](`r url`) Quantitative proteomic analysis of the PD prefrontal cortex.**
