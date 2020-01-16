@@ -22,7 +22,8 @@ objects=\
   Results_Aging/index.html \
   Figure4/index.html \
   Results_Mice/index.html \
-  Figure5/index.html
+  Figure5/index.html \
+  Results_etc/index.html
 
 all: navbar $(objects)
 
