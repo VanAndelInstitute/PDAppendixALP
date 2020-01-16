@@ -5,8 +5,6 @@
 
 - [Website of data analysis results](http://www.vugene.eu/VAI/pdappendixalp/)
 
-- [Full tarball of the code and analysis data files](http://www.vugene.eu/VAI/pdappendixalp/archive_20200115.tar.gz)
-
 
 # Running the analysis on local machine
 
