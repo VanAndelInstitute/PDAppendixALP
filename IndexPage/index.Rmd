@@ -1,5 +1,5 @@
 ---
-title: "PD appendix ALP"
+title: "Epigenetic inactivation of the autophagy–lysosomal system in the Parkinson’s disease appendix"
 output: 
   html_document:
     includes:
@@ -13,9 +13,6 @@ runtime: shiny_prerendered
 source("../code/common.R")
 ```
 
-
-
-# Epigenetic inactivation of the autophagy–lysosomal system in the Parkinson’s disease appendix
 
 - [Source code](http://git.vugene.eu/gordevicius/pdappendixalp)
 
