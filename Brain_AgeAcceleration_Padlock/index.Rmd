@@ -41,7 +41,7 @@ params <- list(
   model = list(
     formula = "~ 0 + Group + Group:Age + Sex + PMI + GLU",
     formula0= "~ 0 + Group + Age + Sex + PMI + GLU",
-    contrasts = c("GroupCTRL.Age", "GroupPD.Age", "GroupCTRL.Age - GroupPD.Age"),
+    contrasts = c("GroupCTRL.Age", "GroupPD.Age"),
     svRange = 1:6
   )
 )
@@ -55,7 +55,6 @@ params %>% jsonlite::toJSON(pretty=TRUE, auto_unbox = TRUE)
 
 # Data
 
-From directory "PD_Padlock_Autophagy".
 
 ```{r}
 padlock <- function() {
@@ -145,13 +144,6 @@ modelparams <- list(
 ```{r, child="../code/padlockLmFit_2.Rmd"}
 ```
 
-
-```{r}
-methylation <- methylation[1:1000,]
-```
-
-```{r, child="../code/ageAcceleration.Rmd"}
-```
 
 
 # SessionInfo

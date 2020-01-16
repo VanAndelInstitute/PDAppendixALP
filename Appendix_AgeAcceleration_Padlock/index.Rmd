@@ -46,7 +46,7 @@ params <- list(
   model         = list(
     formula     = "~ 0 + Diagnosis + Diagnosis:Age + Cohort + Sex + PMI",
     formula0    = "~ 0 + Diagnosis + Age + Cohort + Sex + PMI",
-    contrasts = c("DiagnosisControl.Age", "DiagnosisPD.LBD.Age", "DiagnosisControl.Age - DiagnosisPD.LBD.Age"),
+    contrasts = c("DiagnosisControl.Age", "DiagnosisPD.LBD.Age"),
     svRange     = 1:6
   )
 )

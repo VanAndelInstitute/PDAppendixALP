@@ -54,8 +54,7 @@ params <- list(
     formula     = "~ 0 + Diagnosis + Diagnosis:Age + Cohort + Sex + PMI + RIN",
     formula0    = "~ 0 + Diagnosis + Age + Cohort + Sex + PMI + RIN",
     contrasts = c("DiagnosisControl.Age", 
-    			  "DiagnosisPD.LBD.Age", 
-    			  "DiagnosisControl.Age - DiagnosisPD.LBD.Age"),
+    			  "DiagnosisPD.LBD.Age"),
     svRange     = 1:6,
     bacon       = FALSE
   )
@@ -221,6 +220,12 @@ foo <- function() {
 }
 # touch()
 data <- cache(foo=foo, fname="data.RDS", verbose=TRUE)
+```
+
+Resulting data structure:
+
+```{r, include=TRUE}
+sapply(data, dim)
 ```
 
 # Analysis

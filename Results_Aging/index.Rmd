@@ -133,6 +133,7 @@ dplyr::select(estimate=OR,
        conf.low=Lo, 
        conf.high=Hi, 
        category=Category, 
+       type=Type,
        p_stars = `P < 0.05`) %>%
 kable() %>%
 kable_styling(bootstrap_options = c("hover"))
