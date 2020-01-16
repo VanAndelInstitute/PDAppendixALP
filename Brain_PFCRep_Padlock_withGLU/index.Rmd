@@ -54,7 +54,6 @@ params %>% jsonlite::toJSON(pretty=TRUE, auto_unbox = TRUE)
 
 # Data
 
-From directory "PD_Padlock_Autophagy".
 
 ```{r}
 padlock <- function() {

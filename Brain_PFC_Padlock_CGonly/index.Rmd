@@ -54,8 +54,6 @@ params %>% jsonlite::toJSON(pretty=TRUE, auto_unbox = TRUE)
 
 # Data
 
-From directory "PD_Padlock_Appendix_PFC".
-
 ```{r}
 padlock <- function() {
   data <- list()

@@ -307,7 +307,7 @@ url <- "../Brain_PFC_Padlock_CGonly/www/m6_Brain_PFC_Padlock_CGonly.csv"
 stopifnot(file.exists(url))
 ```
 
-- **[Additional file 7](`r url`) DNA methylation changes in prefrontal cortex neurons with PD Braak stage.**
+- **[Additional file 7](`r url`) DNA methylation changes in the prefrontal cortex neurons of PD patients relative to controls, replication cohort.**
 
 # Hallmarks of PD
 

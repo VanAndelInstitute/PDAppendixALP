@@ -53,7 +53,7 @@ if (modelparams$downloadDataMatrix == TRUE) {
     dir.create("www")
   saveRDS(mydata, file = fname)
 
-  cat(paste0("> Download [data](", fname, ") file.\n\n"))
+  cat(paste0("> [Download processed data (.RDS)](", fname, ") file.\n\n"))
   rm(mydata, fname)
 } else {
   cat("> No data to download.\n\n")
@@ -425,10 +425,6 @@ if (is.null(params$model$contrasts)) {
     verbose=FALSE, 
     fit=pd)
 
-  pdf(glue("www/{prefix}manhattan.pdf"), width=7.2, height=7.2/2)
-  ggarrange(p1, p2, labels=c("A", "B"), widths = c(3, 1))
-  dev.off()
-
   p1 <- p1 +  
     theme_bw(base_size=12) +
     theme( 
@@ -448,7 +444,6 @@ if (is.null(params$model$contrasts)) {
     ) 
   rm(pd)
   print(ggarrange(p1, p2, labels=c("A", "B"), widths = c(3, 1)))
-  cat(glue("[PDF](www/{prefix}manhattan.pdf)\n\n"))
 } else {
   for(contrast in params$model$contrasts) {
     field1 <- paste0("C.", contrast)
@@ -471,9 +466,6 @@ if (is.null(params$model$contrasts)) {
       verbose=FALSE, 
       fit=pd)
     p1 <- p1 + ggtitle(contrast)
-    pdf(glue("www/{prefix}manhattan_{contrastName}.pdf"), width=7.2, height=7.2/2)
-    ggarrange(p1, p2, labels=c("A", "B"), widths = c(3, 1))
-    dev.off()
 
     p1 <- p1 +  
       theme_bw(base_size=12) +
@@ -493,7 +485,6 @@ if (is.null(params$model$contrasts)) {
         axis.text.x = element_text(angle = 45, hjust = 1)
       ) 
     print(ggarrange(p1, p2, labels=c("A", "B"), widths = c(3, 1)))
-    cat(glue("[PDF](www/{prefix}manhattan_{contrastName}.pdf)\n\n"))
   }
 }
 ```
@@ -507,40 +498,5 @@ fwrite(fit, file = fname, row.names = FALSE)
 ```
 
 ```{r, include=TRUE, results='asis'}
-cat(paste0("[Download results](", fname, ")\n"))
-```
-
-### GSEA
-
-
-```{r}
-if (is.null(params$model$contrasts)) {
-  if (!file.exists(glue("gsea_{prefix}{basename(getwd())}.log"))) {
-    rank_df <- fit[, list(SYMBOL, Rank = sign(logFC) * (-1) * log10(P.Value))]
-    rank_df <- rank_df[order(Rank,decreasing=TRUE),]
-    rank_df <- rank_df[!is.na(SYMBOL),]
-    rank_df <- rank_df[!duplicated(SYMBOL),]
-    rank_df <- rank_df[SYMBOL != ""]
-    write.table(rank_df, 
-      file=glue("{prefix}rank_df.rnk"), sep="\t", row=F, quote=F)
-
-    cmd <- glue("java -cp ../etc/gsea-3.0.jar -Xmx10G xtools.gsea.GseaPreranked -gmx ../etc/Human_GOBP_AllPathways_no_GO_iea_November_01_2017_symbol.gmt -nperm 1000 -scoring_scheme classic -norm meandiv -rnk {prefix}rank_df.rnk -gui false -out www -rpt_label {prefix}{basename(getwd())} -set_min 10 -set_max 200 -rnd_seed timestamp -plot_top_x 20 -zip_report true -make_sets true -create_svgs false > gsea_{prefix}{basename(getwd())}.log")
-
-    system(cmd)
-  }
-
-  fUp <- Sys.glob(glue("www/{prefix}{basename(getwd())}.GseaPreranked*/gsea_report_for_na_pos*.xls"))
-  stopifnot(file.exists(fUp))
-
-  fDown <- Sys.glob(glue("www/{prefix}{basename(getwd())}.GseaPreranked*/gsea_report_for_na_neg*.xls"))
-  stopifnot(file.exists(fDown))  
-}
-```
-
-```{r, include=TRUE, results='asis'}
-if (is.null(params$model$contrasts)) {
-  cat(glue("[UP]({fUp})\n"))
-  cat("\n")
-  cat(glue("[DOWN]({fDown})\n"))
-}
+cat(paste0("[Download model fit results (.csv)](", fname, ")\n"))
 ```
