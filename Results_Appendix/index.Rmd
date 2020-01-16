@@ -546,6 +546,8 @@ dt2 <-
 
 ```
 
+N = `r nrow(dt2)`.
+
 ```{r, include=TRUE}
 dt2[, wtd.cor(V1, V2, weight=-log(V3))] %>%
 kable() %>%
