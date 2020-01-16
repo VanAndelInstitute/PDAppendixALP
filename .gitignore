@@ -1,0 +1,11 @@
+._*
+.*
+*.RDS
+*.txt.gz
+*.bed
+*.bdg
+restart.txt
+index_data
+.DS_Store
+AmiGO
+IndexPage/www/archive*.tar.gz
