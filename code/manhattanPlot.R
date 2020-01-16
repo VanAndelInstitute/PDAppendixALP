@@ -161,7 +161,7 @@ manhattanPlot <- function(fit, qThresh = 0.05, labelGenes = TRUE) {
     scale_fill_manual("", values=c("#33a02c", "#1f78b4")) + 
     xlab("-methylated") + 
     ylab("mC Proportion, %") + 
-    ggtitle("Fisher's test", latex2exp::TeX(f$p.value)) + 
+    ggtitle("Fisher test", latex2exp::TeX(f$p.value)) + 
     # ggtitle(glue::glue("Fisher test\np={texP(f$p.value)}")) + 
     guides(fill=FALSE)
 
