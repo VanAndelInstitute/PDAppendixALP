@@ -37,8 +37,11 @@ texP <- function(p, digits=2, scthreshold = 0.01) {
 
 texPstars <- function(pstars) {
 	factor(pstars, 
-         levels = c("***", "**", "*", ".", ""),
+         levels = c("***", "**", "*", ".", " "),
          labels = c("\\*\\*\\*", "\\*\\*", "\\*", "$\\cdot$", " ")
        )
 }
 
+
+# ps  <- c(0.2, 0.1, 0.05, 0.01, NA, 0.0001)
+# texPstars(gtools::stars.pval(ps))
