@@ -107,7 +107,7 @@ if (modelparams$downloadDataMatrix == TRUE) {
     dir.create("www")
   saveRDS(mydata, file = fname)
 
-  cat(paste0("> Download [data](", fname, ") file.\n\n"))
+  cat(paste0("> [Download processed data (.RDS)](", fname, ") file.\n\n"))
   rm(mydata, fname)
 } else {
   cat("> No data to download.\n\n")
@@ -378,9 +378,6 @@ if (is.null(params$model$contrasts)) {
     verbose=FALSE, 
     fit=fit)
 
-  pdf(glue("www/{prefix}manhattan.pdf"), width=7.2, height=7.2/2)
-  ggarrange(p1, p2, labels=c("A", "B"), widths = c(3, 1))
-  dev.off()
 
   p1 <- p1 +  
     theme_bw(base_size=12) +
@@ -400,7 +397,6 @@ if (is.null(params$model$contrasts)) {
       axis.text.x = element_text(angle = 45, hjust = 1)
     ) 
   print(ggarrange(p1, p2, labels=c("A", "B"), widths = c(3, 1)))
-  cat(glue("[PDF](www/{prefix}manhattan.pdf)\n\n"))
 } else {
   for(contrast in params$model$contrasts) {
     field1 <- paste0("C.", contrast)
@@ -415,9 +411,6 @@ if (is.null(params$model$contrasts)) {
       verbose=FALSE, 
       fit=pd)
     p1 <- p1 + ggtitle(contrast)
-    pdf(glue("www/{prefix}manhattan_{contrastName}.pdf"), width=7.2, height=7.2/2)
-    ggarrange(p1, p2, labels=c("A", "B"), widths = c(3, 1))
-    dev.off()
 
     p1 <- p1 +  
       theme_bw(base_size=12) +
@@ -437,37 +430,9 @@ if (is.null(params$model$contrasts)) {
         axis.text.x = element_text(angle = 45, hjust = 1)
       ) 
     print(ggarrange(p1, p2, labels=c("A", "B"), widths = c(3, 1)))
-    cat(glue("[PDF](www/{prefix}manhattan_{contrastName}.pdf)\n\n"))
   }
 }
-
 ```
-
-### Enrichment 
-
-```{r, include=TRUE}
-ftest <- function(x, y) {
-  tryCatch({
-    f <- fisher.test(table(x, y))
-    list(OR=f$estimate, P=f$p.value)    
-  }, 
-  error = function(e) {
-    return(list(OR=double(), P=double()))
-  })
-}
-if (all(c("logFC", "Seq") %in% colnames(fit))) {
-  fit[, c(
-          list(MeanFC=mean(logFC, na.rm=TRUE), NoSign = sum(adj.P.Val < 0.05, na.rm=TRUE)), 
-          ftest( sign(logFC > 0), adj.P.Val < 0.05)
-          ), 
-    substr(Seq, 1, 2)] %>%
-    kable() %>%
-    kable_styling(bootstrap_options = c("striped", "hover"))  
-} else {
-}
-
-```
-
 
 ### Download
 
@@ -478,7 +443,7 @@ fwrite(fit, file = fname, row.names = FALSE)
 ```
 
 ```{r, include=TRUE, results='asis'}
-cat(paste0("[Download results](", fname, ")\n"))
+cat(paste0("[Download model fit results (.csv)](", fname, ")\n"))
 ```
 
 

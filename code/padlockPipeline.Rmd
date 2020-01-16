@@ -86,50 +86,6 @@ if (!is.null(params$clustering)) {
 
 ## Normalization
 
-```{r}
-# # DEBUG
-# stop("Work from here")
-
-# # Is mean methylation in CCH loci related to diagnosis?
-# lidx <- data$genome[, grepl("CC", Seq)]
-# # lidx <- data$genome[, grepl("CG", Type)]
-# data$beta[lidx, ] %>% 
-#   matrixStats::colMedians(na.rm=TRUE) %>% 
-#   # colMeans(., na.rm=TRUE) %>%
-#   data.table(data$modelData, MeanCCH=.) %>%
-#   glm(Group ~ ., data = ., family=binomial(link=logit)) %>%
-#   summary
-
-# beta2m <- function(y, fixInfinity = FALSE) {
-#   if (fixInfinity != FALSE) {
-#     if (is.logical(fixInfinity) & fixInfinity == TRUE) {
-#       n.obs <- sum(!is.na(y))  
-#     } else {
-#       n.obs <- 1/fixInfinity
-#     }
-#     y <- (y * (n.obs -1) + 0.5)/ n.obs
-#   }
-#   y <- log2(y / (1-y))
-#   y[is.infinite(y)] <- NA
-#   return(y)
-# }
-
-# m <- beta2m(data$beta, fixInfinity = 0.001)
-# m %>% 
-#   # matrixStats::colMedians(na.rm=TRUE) %>% 
-#   colMeans(., na.rm=TRUE) %>%
-#   data.table(data$modelData, MeanCCH=.) %>%
-#   glm(Group ~ ., data = ., family=binomial(link=logit)) %>%
-#   summary
-
-# # subtract CHH effect
-# # Fit model to each locus and take residuals?
-# # Quantile normalize beta values?
-
-# # And then how to test? 
-#   # Fit the model to subset of loci, check for enrichment?
-
-```
 
 ```{r}
 quantileNormalize <- function( x ) {
@@ -261,7 +217,7 @@ suppressWarnings(ggarrange(plotlist = plotsBeforeNormalization,
 <!-- After normalization -->
 ```{r, include=TRUE, results="asis"}
 if (params$normalization$normalize == TRUE) {
-  cat("NU and M matrices were quantile normalized separately, total 
+  cat("U and M matrices were quantile normalized separately, total 
     counts and beta values were obtained from normalized matrices.\n\n")
   cat("Signals after normalization\n\n")
 

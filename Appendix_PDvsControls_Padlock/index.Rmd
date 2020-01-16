@@ -53,9 +53,6 @@ params %>% jsonlite::toJSON(pretty=TRUE, auto_unbox = TRUE)
 
 # Data
 
-From directory PD_Appendix_padloc_01172019, the beta and count matrices
-provided by Peipei. Technical replicates were combined by averaging and
-rounding their M and U counts. Beta values were already averaged.
 
 ```{r}
 padlock <- function() {
@@ -178,7 +175,6 @@ sapply(data, dim)
 
 # Robust lmFit 
 
-50% stable, non extreme change, M values, robust limma eBayes
 
 ```{r, include=TRUE, echo=TRUE}
 methylation <- data$beta
