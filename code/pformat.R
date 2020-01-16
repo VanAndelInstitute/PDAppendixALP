@@ -3,7 +3,7 @@ require("latex2exp")
 
 # Takes a p value and formats with Latex in scientific notation
 # but only if the value is less than 0.01
-texP <- function(p, digits=2, scthreshold = 0.01) {
+texP <- function(p, digits=3, scthreshold = 0.01) {
   p[ p == 0 ] <- 2.2e-16
   scientific <- p < scthreshold
   scientific[is.na(p)] <- FALSE

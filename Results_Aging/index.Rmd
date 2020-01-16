@@ -521,7 +521,7 @@ ggplot(., aes(Age, Trend, color = Group)) +
   geom_text(data = textLayer, aes(label = TeX(label, output="character")), 
     parse = TRUE, show.legend = FALSE,
     hjust=0) +
-  ylab("Mean normalized modification") + 
+  ylab("Mean normalized methylation") + 
   facet_grid(Type ~ Dir, scales = "free_x") + 
   scale_shape_manual(values = c(16, 17)) +
   scale_color_manual(values = c("black", "#e31a1c")) +
@@ -634,7 +634,7 @@ pB <-
     geom_text(data = textLayer, aes(label = TeX(label, output="character")), 
       parse = TRUE, 
       hjust=0) +
-    ylab("Mean normalized modification") + 
+    ylab("Mean normalized methylation") + 
     facet_grid(Type ~ Dir, scales = "free") + 
     scale_shape_manual(values = c(16, 17)) +
     scale_color_manual(values = c("black", "#e31a1c")) +

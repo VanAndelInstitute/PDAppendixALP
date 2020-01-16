@@ -407,7 +407,7 @@ pE <-
     geom_text(data = textLayer, aes(label = TeX(label, output="character")), 
       parse = TRUE, 
       size = 2.2, hjust=0) +
-    ylab("Mean normalized modification") + 
+    ylab("Mean normalized methylation") + 
     facet_grid(Type ~ Dir, scales = "free_x") + 
     scale_shape_manual(values = c(16, 17)) +
     scale_color_manual(values = c("black", "#e31a1c")) +
