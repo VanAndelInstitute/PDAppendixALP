@@ -465,7 +465,7 @@ modelparams &lt;- list(
 <div id="section-data-download" class="section level2">
 <h2>Data download</h2>
 <blockquote>
-<p>Download <a href="www/r1_rnaseq.RDS">data</a> file.</p>
+<p><a href="www/r1_rnaseq.RDS">Download processed data (.RDS)</a> file.</p>
 </blockquote>
 </div>
 <div id="section-data-pcs-vs-covariates" class="section level2">
@@ -849,16 +849,11 @@ PC8
 </div>
 <div id="section-manhattan-plot" class="section level3">
 <h3>Manhattan plot</h3>
-<pre><code>## Loading required package: ggrepel</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-28-1.png" width="100%" /><a href="www/r1_manhattan.pdf">PDF</a></p>
+<p><img src="index_files/figure-html/unnamed-chunk-28-1.png" width="100%" /></p>
 </div>
 <div id="section-download-fits" class="section level3">
 <h3>Download fits</h3>
-<p><a href="www/r1_Appendix_PDvsControls_RNAseq.csv">Download results</a></p>
-</div>
-<div id="section-gsea" class="section level3">
-<h3>GSEA</h3>
-<p><a href="www/r1_Appendix_PDvsControls_RNAseq.GseaPreranked.1578937400982/gsea_report_for_na_pos_1578937400982.xls">UP</a> <a href="www/r1_Appendix_PDvsControls_RNAseq.GseaPreranked.1578937400982/gsea_report_for_na_neg_1578937400982.xls">DOWN</a></p>
+<p><a href="www/r1_Appendix_PDvsControls_RNAseq.csv">Download model fit results (.csv)</a></p>
 </div>
 </div>
 </div>
@@ -879,28 +874,28 @@ PC8
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] ggrepel_0.8.1         edgeR_3.28.0          latex2exp_0.4.0      
-##  [4] doSNOW_1.0.18         snow_0.4-3            itertools_0.1-3      
-##  [7] iterators_1.0.12      limma_3.42.0          impute_1.60.0        
-## [10] WGCNA_1.68            fastcluster_1.1.25    dynamicTreeCut_1.63-1
-## [13] glue_1.3.1            foreach_1.4.7         ggpubr_0.2.4         
-## [16] magrittr_1.5          plotly_4.9.1          ggplot2_3.2.1        
-## [19] dplyr_0.8.3           data.table_1.12.8     kableExtra_1.1.0     
-## [22] knitr_1.26            shiny_1.4.0          
+##  [1] edgeR_3.28.0          latex2exp_0.4.0       doSNOW_1.0.18        
+##  [4] snow_0.4-3            itertools_0.1-3       iterators_1.0.12     
+##  [7] limma_3.42.0          impute_1.60.0         WGCNA_1.68           
+## [10] fastcluster_1.1.25    dynamicTreeCut_1.63-1 glue_1.3.1           
+## [13] foreach_1.4.7         ggpubr_0.2.4          magrittr_1.5         
+## [16] plotly_4.9.1          ggplot2_3.2.1         dplyr_0.8.3          
+## [19] data.table_1.12.8     kableExtra_1.1.0      knitr_1.26           
+## [22] shiny_1.4.0          
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] colorspace_1.4-1      ggsignif_0.6.0        htmlTable_1.13.3     
 ##  [4] base64enc_0.1-3       rstudioapi_0.10       farver_2.0.1         
-##  [7] bit64_0.9-7           AnnotationDbi_1.48.0  mvtnorm_1.0-11       
-## [10] xml2_1.2.2            codetools_0.2-16      splines_3.6.1        
-## [13] doParallel_1.0.15     robustbase_0.93-5     zeallot_0.1.0        
-## [16] Formula_1.2-3         jsonlite_1.6          cluster_2.1.0        
-## [19] GO.db_3.10.0          rrcov_1.4-7           readr_1.3.1          
-## [22] compiler_3.6.1        httr_1.4.1            backports_1.1.5      
-## [25] assertthat_0.2.1      Matrix_1.2-17         fastmap_1.0.1        
-## [28] lazyeval_0.2.2        later_1.0.0           acepack_1.4.1        
-## [31] htmltools_0.4.0       tools_3.6.1           gtable_0.3.0         
-## [34] reshape2_1.4.3        Rcpp_1.0.3            Biobase_2.46.0       
+##  [7] ggrepel_0.8.1         bit64_0.9-7           AnnotationDbi_1.48.0 
+## [10] mvtnorm_1.0-11        xml2_1.2.2            codetools_0.2-16     
+## [13] splines_3.6.1         doParallel_1.0.15     robustbase_0.93-5    
+## [16] zeallot_0.1.0         Formula_1.2-3         jsonlite_1.6         
+## [19] cluster_2.1.0         GO.db_3.10.0          rrcov_1.4-7          
+## [22] readr_1.3.1           compiler_3.6.1        httr_1.4.1           
+## [25] backports_1.1.5       assertthat_0.2.1      Matrix_1.2-17        
+## [28] fastmap_1.0.1         lazyeval_0.2.2        later_1.0.0          
+## [31] acepack_1.4.1         htmltools_0.4.0       tools_3.6.1          
+## [34] gtable_0.3.0          Rcpp_1.0.3            Biobase_2.46.0       
 ## [37] vctrs_0.2.1           preprocessCore_1.48.0 xfun_0.11            
 ## [40] stringr_1.4.0         rvest_0.3.5           mime_0.8             
 ## [43] lifecycle_0.1.0       DEoptimR_1.0-8        MASS_7.3-51.4        
@@ -913,15 +908,15 @@ PC8
 ## [64] matrixStats_0.55.0    evaluate_0.14         lattice_0.20-38      
 ## [67] purrr_0.3.3           labeling_0.3          htmlwidgets_1.5.1    
 ## [70] cowplot_1.0.0         bit_1.1-14            tidyselect_0.2.5     
-## [73] robust_0.4-18.1       plyr_1.8.5            R6_2.4.1             
-## [76] IRanges_2.20.0        Hmisc_4.2-0           fit.models_0.5-14    
-## [79] DBI_1.1.0             pillar_1.4.3          foreign_0.8-72       
-## [82] withr_2.1.2           survival_2.44-1.1     nnet_7.3-12          
-## [85] tibble_2.1.3          crayon_1.3.4          rmarkdown_1.18       
-## [88] locfit_1.5-9.1        grid_3.6.1            blob_1.2.0           
-## [91] digest_0.6.23         webshot_0.5.2         xtable_1.8-4         
-## [94] tidyr_1.0.0           httpuv_1.5.2          stats4_3.6.1         
-## [97] munsell_0.5.0         viridisLite_0.3.0</code></pre>
+## [73] robust_0.4-18.1       R6_2.4.1              IRanges_2.20.0       
+## [76] Hmisc_4.2-0           fit.models_0.5-14     DBI_1.1.0            
+## [79] pillar_1.4.3          foreign_0.8-72        withr_2.1.2          
+## [82] survival_2.44-1.1     nnet_7.3-12           tibble_2.1.3         
+## [85] crayon_1.3.4          rmarkdown_1.18        locfit_1.5-9.1       
+## [88] grid_3.6.1            blob_1.2.0            digest_0.6.23        
+## [91] webshot_0.5.2         xtable_1.8-4          tidyr_1.0.0          
+## [94] httpuv_1.5.2          stats4_3.6.1          munsell_0.5.0        
+## [97] viridisLite_0.3.0</code></pre>
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="dependencies">
 {"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["1.11.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/jquery"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.18"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.3.5"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","shim/html5shiv.min.js","shim/respond.min.js"]},{"type":"character","attributes":{},"value":["css/bootstrap.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.18"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["1.11.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/jquery"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.18"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jqueryui"]},{"type":"character","attributes":{},"value":["1.11.4"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/jqueryui"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery-ui.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.18"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tocify"]},{"type":"character","attributes":{},"value":["1.9.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/tocify"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.tocify.js"]},{"type":"character","attributes":{},"value":["jquery.tocify.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.18"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["1.11.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/jquery"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.18"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["navigation"]},{"type":"character","attributes":{},"value":["1.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/navigation-1.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tabsets.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.18"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["highlightjs"]},{"type":"character","attributes":{},"value":["9.12.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/highlightjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["highlight.js"]},{"type":"character","attributes":{},"value":["default.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.18"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["kePrint"]},{"type":"character","attributes":{},"value":["0.0.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["kePrint-0.0.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["kePrint.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["kableExtra"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.1.0"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["kePrint"]},{"type":"character","attributes":{},"value":["0.0.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["kePrint-0.0.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["kePrint.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["kableExtra"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.1.0"]}]}]}
@@ -929,7 +924,7 @@ PC8
 <!--/html_preserve-->
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="execution_dependencies">
-{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129]}},"value":[{"type":"character","attributes":{},"value":["acepack","AnnotationDbi","assertthat","backports","base","base64enc","Biobase","BiocGenerics","bit","bit64","blob","checkmate","cluster","codetools","colorspace","compiler","cowplot","crayon","data.table","datasets","DBI","DEoptimR","digest","doParallel","doSNOW","dplyr","dynamicTreeCut","edgeR","evaluate","farver","fastcluster","fastmap","fit.models","foreach","foreign","Formula","ggplot2","ggpubr","ggrepel","ggsignif","glue","GO.db","graphics","grDevices","grid","gridExtra","gtable","highr","Hmisc","hms","htmlTable","htmltools","htmlwidgets","httpuv","httr","impute","IRanges","iterators","itertools","jsonlite","kableExtra","knitr","labeling","later","latex2exp","lattice","latticeExtra","lazyeval","lifecycle","limma","locfit","magrittr","MASS","Matrix","matrixStats","memoise","methods","mime","munsell","mvtnorm","nnet","parallel","pcaPP","pillar","pkgconfig","plotly","plyr","preprocessCore","promises","purrr","R6","RColorBrewer","Rcpp","readr","reshape2","rlang","rmarkdown","robust","robustbase","rpart","rrcov","RSQLite","rstudioapi","rvest","S4Vectors","scales","shiny","snow","splines","stats","stats4","stringi","stringr","survival","tibble","tidyr","tidyselect","tools","utils","vctrs","viridisLite","webshot","WGCNA","withr","xfun","xml2","xtable","yaml","zeallot"]},{"type":"character","attributes":{},"value":["1.4.1","1.48.0","0.2.1","1.1.5","3.6.1","0.1-3","2.46.0","0.32.0","1.1-14","0.9-7","1.2.0","1.9.4","2.1.0","0.2-16","1.4-1","3.6.1","1.0.0","1.3.4","1.12.8","3.6.1","1.1.0","1.0-8","0.6.23","1.0.15","1.0.18","0.8.3","1.63-1","3.28.0","0.14","2.0.1","1.1.25","1.0.1","0.5-14","1.4.7","0.8-72","1.2-3","3.2.1","0.2.4","0.8.1","0.6.0","1.3.1","3.10.0","3.6.1","3.6.1","3.6.1","2.3","0.3.0","0.8","4.2-0","0.5.2","1.13.3","0.4.0","1.5.1","1.5.2","1.4.1","1.60.0","2.20.0","1.0.12","0.1-3","1.6","1.1.0","1.26","0.3","1.0.0","0.4.0","0.20-38","0.6-28","0.2.2","0.1.0","3.42.0","1.5-9.1","1.5","7.3-51.4","1.2-17","0.55.0","1.1.0","3.6.1","0.8","0.5.0","1.0-11","7.3-12","3.6.1","1.9-73","1.4.3","2.0.3","4.9.1","1.8.5","1.48.0","1.1.0","0.3.3","2.4.1","1.1-2","1.0.3","1.3.1","1.4.3","0.4.2","1.18","0.4-18.1","0.93-5","4.1-15","1.4-7","2.1.5","0.10","0.3.5","0.24.0","1.1.0","1.4.0","0.4-3","3.6.1","3.6.1","3.6.1","1.4.3","1.4.0","2.44-1.1","2.1.3","1.0.0","0.2.5","3.6.1","3.6.1","0.2.1","0.3.0","0.5.2","1.68","2.1.2","0.11","1.2.2","1.8-4","2.2.0","0.1.0"]}]}]}
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127]}},"value":[{"type":"character","attributes":{},"value":["acepack","AnnotationDbi","assertthat","backports","base","base64enc","Biobase","BiocGenerics","bit","bit64","blob","checkmate","cluster","codetools","colorspace","compiler","cowplot","crayon","data.table","datasets","DBI","DEoptimR","digest","doParallel","doSNOW","dplyr","dynamicTreeCut","edgeR","evaluate","farver","fastcluster","fastmap","fit.models","foreach","foreign","Formula","ggplot2","ggpubr","ggrepel","ggsignif","glue","GO.db","graphics","grDevices","grid","gridExtra","gtable","highr","Hmisc","hms","htmlTable","htmltools","htmlwidgets","httpuv","httr","impute","IRanges","iterators","itertools","jsonlite","kableExtra","knitr","labeling","later","latex2exp","lattice","latticeExtra","lazyeval","lifecycle","limma","locfit","magrittr","MASS","Matrix","matrixStats","memoise","methods","mime","munsell","mvtnorm","nnet","parallel","pcaPP","pillar","pkgconfig","plotly","preprocessCore","promises","purrr","R6","RColorBrewer","Rcpp","readr","rlang","rmarkdown","robust","robustbase","rpart","rrcov","RSQLite","rstudioapi","rvest","S4Vectors","scales","shiny","snow","splines","stats","stats4","stringi","stringr","survival","tibble","tidyr","tidyselect","tools","utils","vctrs","viridisLite","webshot","WGCNA","withr","xfun","xml2","xtable","yaml","zeallot"]},{"type":"character","attributes":{},"value":["1.4.1","1.48.0","0.2.1","1.1.5","3.6.1","0.1-3","2.46.0","0.32.0","1.1-14","0.9-7","1.2.0","1.9.4","2.1.0","0.2-16","1.4-1","3.6.1","1.0.0","1.3.4","1.12.8","3.6.1","1.1.0","1.0-8","0.6.23","1.0.15","1.0.18","0.8.3","1.63-1","3.28.0","0.14","2.0.1","1.1.25","1.0.1","0.5-14","1.4.7","0.8-72","1.2-3","3.2.1","0.2.4","0.8.1","0.6.0","1.3.1","3.10.0","3.6.1","3.6.1","3.6.1","2.3","0.3.0","0.8","4.2-0","0.5.2","1.13.3","0.4.0","1.5.1","1.5.2","1.4.1","1.60.0","2.20.0","1.0.12","0.1-3","1.6","1.1.0","1.26","0.3","1.0.0","0.4.0","0.20-38","0.6-28","0.2.2","0.1.0","3.42.0","1.5-9.1","1.5","7.3-51.4","1.2-17","0.55.0","1.1.0","3.6.1","0.8","0.5.0","1.0-11","7.3-12","3.6.1","1.9-73","1.4.3","2.0.3","4.9.1","1.48.0","1.1.0","0.3.3","2.4.1","1.1-2","1.0.3","1.3.1","0.4.2","1.18","0.4-18.1","0.93-5","4.1-15","1.4-7","2.1.5","0.10","0.3.5","0.24.0","1.1.0","1.4.0","0.4-3","3.6.1","3.6.1","3.6.1","1.4.3","1.4.0","2.44-1.1","2.1.3","1.0.0","0.2.5","3.6.1","3.6.1","0.2.1","0.3.0","0.5.2","1.68","2.1.2","0.11","1.2.2","1.8-4","2.2.0","0.1.0"]}]}]}
 </script>
 <!--/html_preserve-->
 </div>
