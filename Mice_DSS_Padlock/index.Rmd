@@ -43,8 +43,7 @@ params <- list(
     contrasts = c("GTwt_DSS - GTwt_Water", 
                   "GTtg_DSS - GTwt_Water",
                   "GTtg_DSS - GTtg_Water",
-                  "GTtg_Water - GTwt_Water",
-                  "(GTwt_DSS - GTwt_Water) - (GTtg_DSS - GTtg_Water)"),
+                  "GTtg_Water - GTwt_Water"),
     svRange   = 1:6,
     nsv       = 0
   )
@@ -59,7 +58,6 @@ params %>% jsonlite::toJSON(pretty=TRUE, auto_unbox = TRUE)
 
 # Data
 
-From directory "Mice_Padlock_1262019".
 
 ```{r}
 padlock <- function() {
@@ -148,6 +146,13 @@ padlock <- function() {
 # touch()
 data <- cache(foo=padlock, fname="data.RDS", verbose=TRUE)
 ```
+
+Resulting data structure:
+
+```{r, include=TRUE}
+sapply(data, dim)
+```
+
 
 <!-- Run the processing pipeline -->
 ```{r, child="../code/padlockPipeline.Rmd"}

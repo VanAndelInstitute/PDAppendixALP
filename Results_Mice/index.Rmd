@@ -40,14 +40,14 @@ glue("- Number of loci {n}")
 # In WT
 colP <- "P.GTwt_DSS - GTwt_Water"
 n <- dssx[, sum(p.adjust(get(colP), "fdr") < 0.05, na.rm=TRUE)]
-glue("- Number of significant loci in WT {n}")
+glue("- Number of significant loci in WT DSS vs Water {n}")
 n <- dssx[p.adjust(get(colP), "fdr") < 0.05, length(unique(Gene))]
 glue("- Number of affected genes in WT {n}")
 
 # In A30P
 colP <- "P.GTtg_DSS - GTtg_Water"
 n <- dssx[, sum(p.adjust(get(colP), "fdr") < 0.05, na.rm=TRUE)]
-glue("- Number of significant loci in A30P {n}")
+glue("- Number of significant loci in A30P DSS vs Water {n}")
 n <- dssx[p.adjust(get(colP), "fdr") < 0.05, length(unique(Gene))]
 glue("- Number of affected genes in A30P {n}")
 ```
@@ -112,7 +112,7 @@ stopifnot(file.exists(url))
 - **[Additional file 14](`r url`) DNA methylation changes in the cecal patch in response to gut inflammation: wild-type and A30P $\alpha$-syn mice chronically treated with DSS or water.**
 
 
-# Cecal patch
+# rAAV-$\alpha$-syn model
 
 
 ```{r, include=TRUE, results='asis'}
@@ -125,7 +125,7 @@ glue("- Number of genes affected {n}")
 ```
 
 
-```{r, include=TRUE, fig.cap="**Figure S14. Differential methylation of the ALP in the cecal patch of mice with $\alpha$-syn aggregation. **"}
+```{r, include=TRUE, fig.cap="**Figure S14. Differential methylation of the ALP in the cecal patch of mice with a-syn aggregation. **"}
 knitr::include_graphics("../Mice_CecalPatch_Padlock/index_files/figure-html/unnamed-chunk-31-1.png")
 ```
 
@@ -216,7 +216,7 @@ kable %>%
 kable_styling(bootstrap_options="hover")
 ```
 
-# Correlation of gene enrichments in mice and appendix
+# Correlation of gene enrichments in mice and PD appendix
 
 ```{r}
 

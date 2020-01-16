@@ -71,11 +71,6 @@ kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
 
-```{r}
-url <- "../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padlock.csv"
-stopifnot(file.exists(url))
-```
-
 
 ```{r}
 # touch()
@@ -153,6 +148,12 @@ ggarrange(myplots[[1]], myplots[[2]], myplots[[3]],
   ncol = 3, nrow = 1, labels = LETTERS[1:3],
   widths = c(4, 7, 3),
   common.legend = TRUE)
+```
+
+
+```{r}
+url <- "../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padlock.csv"
+stopifnot(file.exists(url))
 ```
 
 

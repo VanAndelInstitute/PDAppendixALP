@@ -1,5 +1,5 @@
 ---
-title: "Mice Cecal Patch, Padlocks"
+title: "Mice rAAV-a-syn, Padlocks"
 output:
   html_document:
     toc: true
@@ -55,7 +55,6 @@ params %>% jsonlite::toJSON(pretty=TRUE, auto_unbox = TRUE)
 
 # Data
 
-From directory "Mice_Padlock_1262019".
 
 ```{r}
 padlock <- function() {
@@ -143,6 +142,13 @@ padlock <- function() {
 # touch()
 data <- cache(foo=padlock, fname="data.RDS", verbose=TRUE)
 ```
+
+Resulting data structure:
+
+```{r, include=TRUE}
+sapply(data, dim)
+```
+
 
 <!-- Run the processing pipeline -->
 ```{r, child="../code/padlockPipeline.Rmd"}
