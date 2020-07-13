@@ -207,11 +207,6 @@ pB <-
 # ggdraw() +
 #   draw_plot(pB,
 #     x = 0.3, y = 0.545, width = 0.3, height = 0.45) 
-
-
-
-
-
 ```
 
 ```{r}
@@ -266,7 +261,6 @@ apxpdfit <- fread(path)
 
 path <- "../Brain_PFCRep_Padlock_withGLU/www/m6_Brain_PFCRep_Padlock_withGLU.csv"
 pfcpdfit <- fread(path)
-
 
 pd <- merge(
             apxfit[, list(
@@ -423,7 +417,7 @@ pE <-
 predicted <- readRDS("../Appendix_AgeAcceleration_Padlock/m6_ageAcceleration.RDS")
 
 pd <- 
-  predicted[, 
+  predicted[Age > 70, 
     list(
       `P-A` = P-A,
       Group = Diagnosis
@@ -444,12 +438,12 @@ pF <-
       data = textLayer, 
       aes(label=latex2exp::TeX(p.value, output="character")),
       inherit.aes = FALSE, parse = TRUE,
-      x = 1.5, y = 50, size = 2.2) + 
+      x = 1.5, y = 5, size = 2.2) + 
     xlab("") + 
     ylab("Predicted - Actual Age, years") + 
     theme_bw(base_size = 10) +
     scale_color_manual(values = c("black", "#e31a1c")) +
-    scale_y_continuous(limits = c(-26, 50)) + 
+    scale_y_continuous(limits = c(-26, 5)) + 
     theme_publication() + 
     theme(
       legend.position="top",
@@ -496,7 +490,7 @@ suppressWarnings(
 	  draw_plot(pF + guides(color=FALSE, shape=FALSE),
 	    x = 0.8, y = 0.235, width = 0.2, height = 0.32) +
 	  draw_plot(legendGroup,
-	    x = .87, y = 0.55, width = 0.2, height = 0.1) +
+	    x = .82, y = 0.55, width = 0.2, height = 0.1) +
 	  draw_plot_label(
 	    label = LETTERS[1:6],
 	    size = 10,
