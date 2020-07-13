@@ -645,7 +645,8 @@ pB <-
 
 # Age deceleration
 predicted <- readRDS("../Appendix_AgeAcceleration_RNAseq/r1_ageAcceleration.RDS")
-pC <- predicted[, 
+pC <- predicted[
+  Age > 70,
   list(
     `P-A` = P-A,
     Group = Diagnosis
