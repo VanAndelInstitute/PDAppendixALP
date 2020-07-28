@@ -28,6 +28,7 @@ source("../code/common.R")
 padlApx <- fread("../Appendix_PDvsControls_Padlock/www/m6_Appendix_PDvsControls_Padlock.csv")
 rnasApx <- fread("../Appendix_PDvsControls_RNAseq/www/r1_Appendix_PDvsControls_RNAseq.csv")
 padlPfc <- fread("../Brain_PFCRep_Padlock_withGLU/www/m6_Brain_PFCRep_Padlock_withGLU.csv")
+padlPfc2 <- fread("../Brain_PFC_Padlock_CGonly/www/m6_Brain_PFC_Padlock_CGonly.csv")
 
 # Load the proteomics fits
 protApx <- fread("www/190319-Labrie-APP_Group1vs2_Quan.csv")
@@ -84,6 +85,7 @@ n <- protApx[Reliable == TRUE & abs(FC) > 0.2, .N]
 glue("- Number of altered proteins {n}")
 ```
 
+
 Dominant direction of change
 
 ```{r, include=TRUE}
@@ -129,6 +131,7 @@ glue("- Number of proteins investigated {n}")
 n <- protPfc[Reliable == TRUE & abs(FC) > 0.2, .N]
 glue("- Number of altered proteins {n}")
 ```
+
 
 Dominant direction of change
 
@@ -206,3 +209,87 @@ tidy %>%
 kable %>%
 kable_styling(bootstrap_options="hover")
 ```
+
+# Proteins altered in both apx and brain
+
+## Appendix 
+
+The fraction of genes epigenetically altered among
+ALP genes altered in proteomic analysis:
+
+```{r, include=TRUE}
+genesFromALP <- padlPfc[, unique(Gene)]
+
+# The ALP genes that have had a change in proteomics data
+alpGenesAlteredInProteomicsApx <- protApx[Reliable == TRUE & abs(FC) > 0.2 & Gene %in% genesFromALP, Gene]
+
+# The ALP genes that have epigentic change
+alpGenesModifiedInAppendix <- padlApx[adj.P.Val < 0.05, unique(Gene)]
+
+# fraction of the proteins that have a change in epigenetic data?
+mean(alpGenesAlteredInProteomicsApx %in% alpGenesModifiedInAppendix)
+```
+
+## PFC
+
+The fraction of genes altered in both proteomic and epigenetic analyses among
+ALP genes altered in proteomic analysis:
+
+```{r, include=TRUE}
+# The ALP genes that have had a change in proteomics data
+alpGenesAlteredInProteomicsPFC <- protPfc[Reliable == TRUE & abs(FC) > 0.2 & Gene %in% genesFromALP, Gene]
+
+# fraction of these genes have a change in epigenetic data?
+alpGenesModifiedInPFC <- unique(c(padlPfc[adj.P.Val < 0.05, unique(Gene)], padlPfc2[adj.P.Val < 0.05, unique(Gene)]))
+
+mean(alpGenesAlteredInProteomicsPFC %in% alpGenesModifiedInPFC)
+```
+
+
+## Both
+
+
+Of the ALP genes that are showing protein changes in the appendix AND brain how many are epigenetically altered in both appendix and brain?
+
+```{r, include=TRUE}
+# The ALP genes that have had a change in proteomics data
+alpGenesAlteredInProteomics <- 
+  intersect(
+    protApx[Reliable == TRUE & abs(FC) > 0.2 & Gene %in% genesFromALP, Gene],
+    protPfc[Reliable == TRUE & abs(FC) > 0.2 & Gene %in% genesFromALP, Gene])
+
+# fraction of these genes have a change in epigenetic data?
+alpGenesModified <- 
+  intersect(
+    padlApx[adj.P.Val < 0.05, unique(Gene)],
+    union(
+      padlPfc[adj.P.Val < 0.05, unique(Gene)],
+      padlPfc2[adj.P.Val < 0.05, unique(Gene)]
+    )
+  )
+
+mean(alpGenesAlteredInProteomics %in% alpGenesModified)
+```
+
+
+```{r}
+# Downloadable list
+allGenes <- unique(c(alpGenesAlteredInProteomicsApx, alpGenesAlteredInProteomicsPFC, alpGenesAlteredInProteomics))
+res <- data.table(Gene = allGenes)
+res[, ProteomicChangeInApx := Gene %in% alpGenesAlteredInProteomicsApx]
+res[, EpigeneticChangeInApx := Gene %in% alpGenesModifiedInAppendix]
+res[, ProteomicChangeInPFC := Gene %in% alpGenesAlteredInProteomicsPFC]
+res[, EpigeneticChangeInPFC := Gene %in% alpGenesModifiedInPFC]
+res[, ProteomicChangeInBoth := Gene %in% alpGenesAlteredInProteomics]
+res[, EpigeneticChangeInBoth := Gene %in% alpGenesModified]
+```
+
+```{r}
+if (!dir.exists("www")) dir.create("www")
+fwrite(res, file = "www/protein2epigenome.csv")
+# url <- "./www/190319-Labrie-APP_Group1vs2_Quan.csv"
+url <- "./www/protein2epigenome.csv"
+stopifnot(file.exists(url))
+```
+
+- **[Additional file NNN](`r url`) Overlap of ALP gene proteomic and epigenomic changes.**
