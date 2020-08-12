@@ -111,7 +111,15 @@ kable_styling(bootstrap_options = c("hover"))
 
 ```{r}
 if (!dir.exists("www")) dir.create("www")
-protApx[Reliable == TRUE & abs(FC) > 0.2] %>%
+protApx[Reliable == TRUE] %>%
+  .[, DiffProtein := abs(FC) > 0.2] %>%
+  .[, IsALPProtein := Gene %in% genesFromALP] %>%
+  merge(
+    padlApx[, list(EpigeneticallyAltered = sum(adj.P.Val < 0.05, na.rm=TRUE)>0), Gene],
+    by = "Gene", all.x = TRUE) %>%
+  merge(
+    rnasApx[, list(DiffExpressed = adj.P.Val < 0.05), list(Gene = SYMBOL)],
+    by = "Gene", all.x = TRUE)  %>%
   select(-Reliable) %>% 
   fwrite(file = "www/protApx.csv")
 # url <- "./www/190319-Labrie-APP_Group1vs2_Quan.csv"
@@ -157,7 +165,14 @@ kable_styling(bootstrap_options = c("hover"))
 ```
 
 ```{r}
-protPfc[Reliable == TRUE & abs(FC) > 0.2] %>%
+protPfc[Reliable == TRUE] %>%
+  .[, DiffProtein := abs(FC) > 0.2] %>%
+  merge(
+    padlPfc[, list(EpigeneticallyAlteredInPFC = sum(adj.P.Val < 0.05, na.rm=TRUE)>0), Gene],
+    by = "Gene", all.x = TRUE) %>%
+  merge(
+    padlPfc2[, list(EpigeneticallyAlteredInPFC2 = sum(adj.P.Val < 0.05, na.rm=TRUE)>0), Gene],
+    by = "Gene", all.x = TRUE) %>%
   select(-Reliable) %>% 
   fwrite(file = "www/protPfc.csv")
 url <- "./www/protPfc.csv"
@@ -284,12 +299,19 @@ res[, ProteomicChangeInBoth := Gene %in% alpGenesAlteredInProteomics]
 res[, EpigeneticChangeInBoth := Gene %in% alpGenesModified]
 ```
 
-```{r}
-if (!dir.exists("www")) dir.create("www")
-fwrite(res, file = "www/protein2epigenome.csv")
-# url <- "./www/190319-Labrie-APP_Group1vs2_Quan.csv"
-url <- "./www/protein2epigenome.csv"
-stopifnot(file.exists(url))
+```{r, include=TRUE}
+res %>%
+.[order(Gene)] %>%
+kable(caption="**Table S2. ALP proteins with differential abundance in either appendix or prefrontal cortex neurons and their corresponding epigenetic alterations.**") %>%
+kable_styling(bootstrap_options="hover")
 ```
 
-- **[Additional file NNN](`r url`) Overlap of ALP gene proteomic and epigenomic changes.**
+```{r}
+# if (!dir.exists("www")) dir.create("www")
+# fwrite(res, file = "www/protein2epigenome.csv")
+# # url <- "./www/190319-Labrie-APP_Group1vs2_Quan.csv"
+# url <- "./www/protein2epigenome.csv"
+# stopifnot(file.exists(url))
+# - **[Additional file NNN](`r url`) Overlap of ALP gene proteomic and epigenomic changes.**
+```
+
