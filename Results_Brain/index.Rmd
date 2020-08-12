@@ -134,56 +134,7 @@ knitr::include_graphics(
 ```
 
 
-
-# Overlap of appendix and brain
-
-```{r, include=TRUE}
-apx <- fread("../Appendix_PDvsControls_Padlock/www/m6_Appendix_PDvsControls_Padlock.csv")
-
-A <- apx[ , sum(adj.P.Val < 0.05, na.rm=TRUE), list(Gene=toupper(Gene))]
-B <- pfcx[ , sum(adj.P.Val < 0.05, na.rm=TRUE), list(Gene=toupper(Gene))]
-C <- ofbx[ , sum(adj.P.Val < 0.05, na.rm=TRUE), list(Gene=toupper(Gene))]
-```
-
-Appendix with olfactory bulb:
-
-```{r, include=TRUE}
-t <- merge(A, C, by = "Gene") %>%  .[, table(V1.x > 0, V1.y > 0)]
-f <- fisher.test(t)
-
-# Show the table
-knitr::kable(t) %>%
-kable_styling(bootstrap_options = c("hover"),
-							full_width = FALSE)
-
-# Show fisher test result
-f %>%
-tidy() %>%
-kable() %>%
-kable_styling(bootstrap_options = c("hover"))
-```
-
-Appendix with prefrontal cortex neurons
-
-```{r, include=TRUE}
-t <- merge(A, B, by = "Gene") %>% .[, table(V1.x > 0, V1.y > 0)]
-f <- fisher.test(t)
-
-# Show the table
-knitr::kable(t) %>%
-kable_styling(bootstrap_options = c("hover"),
-							full_width = FALSE)
-
-# Show fisher test result
-f %>%
-tidy() %>%
-kable() %>%
-kable_styling(bootstrap_options = c("hover"))
-```
-
-
-
-## Prefrontal cortex neurons (large) stage-wise analysis
+# Prefrontal cortex neurons (large) stage-wise analysis
 
 ```{r, include=TRUE}
 stagex <- fread("../Brain_PFCRep_Padlock_withGLU_Braak/www/m6_Brain_PFCRep_Padlock_withGLU_Braak.csv")
@@ -237,7 +188,8 @@ stopifnot(file.exists(url))
 - **[Additional file 6](`r url`) DNA methylation changes in prefrontal cortex neurons with PD Braak stage.**
 
 
-## Prefrontal cortex neurons (replication cohort)
+
+# Prefrontal cortex neurons (replication cohort)
 
 ```{r}
 pfc2x <- fread("../Brain_PFC_Padlock_CGonly/www/m6_Brain_PFC_Padlock_CGonly.csv")
@@ -261,17 +213,17 @@ Dominant direction of methylation
 
 ```{r, include=TRUE}
 t <-
-	pfc2x[, list(
-						Significant = ifelse(adj.P.Val < 0.05, "Significant", "NS"), 
-					 	Direction = ifelse(logFC < 0, "Hypo-M", "Hyper-M")
-					 )] %>%
-	.[, table(Significant, Direction)] %>%
-	.[c("NS", "Significant"), c("Hypo-M", "Hyper-M")]
+  pfc2x[, list(
+            Significant = ifelse(adj.P.Val < 0.05, "Significant", "NS"), 
+            Direction = ifelse(logFC < 0, "Hypo-M", "Hyper-M")
+           )] %>%
+  .[, table(Significant, Direction)] %>%
+  .[c("NS", "Significant"), c("Hypo-M", "Hyper-M")]
 
 # Show the table
 knitr::kable(t) %>%
 kable_styling(bootstrap_options = c("hover"),
-							full_width = FALSE)
+              full_width = FALSE)
 
 # Show fisher test result
 t %>% fisher.test %>% 
@@ -280,10 +232,139 @@ kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
 
-Overlap of differentially methylated ALP genes in PFC replicate cohort and apppendix
+```{r}
+url <- "../Brain_PFC_Padlock_CGonly/www/m6_Brain_PFC_Padlock_CGonly.csv"
+stopifnot(file.exists(url))
+```
+
+- **[Additional file 7](`r url`) DNA methylation changes in prefrontal cortex neurons replication cohort.**
+
+# Overlap of appendix and brain
+
+## At the level of individual cytosines
+
+```{r}
+apx <- fread("../Appendix_PDvsControls_Padlock/www/m6_Appendix_PDvsControls_Padlock.csv")
+```
+
+Appendix - PFC 
+
+```{r, include=TRUE}
+t <- merge( 
+          apx[, list(ID, InApx=adj.P.Val < 0.05)],
+          pfcx[, list(ID, InPFC=adj.P.Val < 0.05)], 
+          by = "ID"
+  ) %>% 
+  .[, table(InApx, InPFC)]
+f <- fisher.test(t)
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+              full_width = FALSE)
+
+# Show fisher test result
+f %>%
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+Appendix - PFC 2
+
+```{r, include=TRUE}
+t <- merge( 
+          apx[, list(ID, InApx=adj.P.Val < 0.05)],
+          pfc2x[, list(ID, InPFC=adj.P.Val < 0.05)], 
+          by = "ID"
+  ) %>% 
+  .[, table(InApx, InPFC)]
+f <- fisher.test(t)
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+              full_width = FALSE)
+
+# Show fisher test result
+f %>%
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+Appendix - OFB
+
+```{r, include=TRUE}
+t <- merge( 
+          apx[, list(ID, InApx=adj.P.Val < 0.05)],
+          ofbx[, list(ID, InOFB=adj.P.Val < 0.05)], 
+          by = "ID"
+  ) %>% 
+  .[, table(InApx, InOFB)]
+f <- fisher.test(t)
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+              full_width = FALSE)
+
+# Show fisher test result
+f %>%
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+## At the level of genes
+
+Consider a gene affected if it has at least one significant DMC.
 
 ```{r, include=TRUE}
 A <- apx[ , sum(adj.P.Val < 0.05, na.rm=TRUE), list(Gene=toupper(Gene))]
+B <- pfcx[ , sum(adj.P.Val < 0.05, na.rm=TRUE), list(Gene=toupper(Gene))]
+C <- ofbx[ , sum(adj.P.Val < 0.05, na.rm=TRUE), list(Gene=toupper(Gene))]
+```
+
+Appendix with olfactory bulb:
+
+```{r, include=TRUE}
+t <- merge(A, C, by = "Gene") %>%  .[, table(V1.x > 0, V1.y > 0)]
+f <- fisher.test(t)
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+							full_width = FALSE)
+
+# Show fisher test result
+f %>%
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+Appendix with prefrontal cortex neurons
+
+```{r, include=TRUE}
+t <- merge(A, B, by = "Gene") %>% .[, table(V1.x > 0, V1.y > 0)]
+f <- fisher.test(t)
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+							full_width = FALSE)
+
+# Show fisher test result
+f %>%
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+Overlap of differentially methylated ALP genes in PFC replicate cohort and apppendix
+
+```{r, include=TRUE}
 D <- pfc2x[ , sum(adj.P.Val < 0.05, na.rm=TRUE), list(Gene=toupper(Gene))]
 
 
@@ -302,12 +383,6 @@ kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
 
-```{r}
-url <- "../Brain_PFC_Padlock_CGonly/www/m6_Brain_PFC_Padlock_CGonly.csv"
-stopifnot(file.exists(url))
-```
-
-- **[Additional file 7](`r url`) DNA methylation changes in prefrontal cortex neurons with PD Braak stage.**
 
 # Hallmarks of PD
 
