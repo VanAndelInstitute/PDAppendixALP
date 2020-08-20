@@ -39,6 +39,10 @@
 				"url": "../Brain_AgeAcceleration_Padlock/"
 			},
 			{
+				"title": "Olfactory bulb aging (bisulfite)",
+				"url": "../Brain_AgeAcceleration_OFB_Padlock_CGonly/"
+			},
+			{
 				"title": "Mice cecal catch (bisulfite)",
 				"url": "../Mice_CecalPatch_Padlock/"
 			},
