@@ -42,7 +42,7 @@ params <- list(
     formula = "~ 0 + Group + Group:Age + Gender + PMI",
     formula0= "~ 0 + Group + Age + Gender + PMI",
     contrasts = c("GroupCTRL.Age", "GroupPD.Age", "GroupCTRL.Age - GroupPD.Age"),
-    svRange = 1:6
+    nsv = 0
   )
 )
 ```
