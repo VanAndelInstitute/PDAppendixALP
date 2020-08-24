@@ -250,6 +250,58 @@ stopifnot(file.exists(url))
 - **[Additional file 12](`r url`) DNA methylation changes in aging prefrontal cortex neurons of healthy individuals and PD patients.**
 
 
+# Olfactory bulb, padlock
+
+```{r}
+ofbax <- fread("../Brain_AgeAcceleration_OFB_Padlock_CGonly/www/m6_Brain_AgeAcceleration_OFB_Padlock_CGonly.csv")
+ofbad <- readRDS("../Brain_AgeAcceleration_OFB_Padlock_CGonly/www/m6_methylation.RDS")
+```
+
+```{r, include=TRUE, results='asis'}
+n <- nrow(ofbax[Type == "CG"])
+glue("- Number of CpG loci {n}")
+n <- nrow(ofbax[Type != "CG"])
+glue("- Number of CpH loci {n}")
+t <- ofbad$key[, table(Group)]
+glue("- Number of PD cases: {t[2]} and controls: {t[1]}")
+n <- ofbax[, sum(p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, na.rm=TRUE)]
+glue("- Number of significant loci {n}")
+n <- ofbax[p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, length(unique(Gene))]
+glue("- Number of genes affected {n}")
+```
+
+Dominant direction of methylation
+
+```{r, include=TRUE}
+t <-
+  ofbax[, list(
+            Significant = ifelse(p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, "Significant", "NS"), 
+            Direction = ifelse(C.GroupCTRL.Age < 0, "Hypo-M", "Hyper-M")
+           )] %>%
+  .[, table(Significant, Direction)] %>%
+  .[c("NS", "Significant"), c("Hypo-M", "Hyper-M")]
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+              full_width = FALSE)
+
+# Show fisher test result
+t %>% fisher.test %>% 
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+```{r}
+url <- "../Brain_AgeAcceleration_OFB_Padlock_CGonly/www/m6_Brain_AgeAcceleration_OFB_Padlock_CGonly.csv"
+stopifnot(file.exists(url))
+```
+
+- **[Additional file 13](`r url`) DNA methylation changes in aging olfactory bulb of healthy individuals and PD patients.**
+
+
+
 # Enrichment of ALP pathways in the epigenome
 
 ```{r}
