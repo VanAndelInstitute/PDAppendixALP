@@ -80,6 +80,14 @@ apxfit <- fread(path)
 # path <- "../Brain_PFCRep_Aging_Padlock/www/m6_Brain_PFCRep_Aging_Padlock.csv"
 path <- "../Brain_AgeAcceleration_Padlock/www/m6_Brain_AgeAcceleration_Padlock.csv"
 pfcfit <- fread(path)
+
+# Aging trends in appendix
+path <- "../Appendix_PDvsControls_Padlock/www/m6_Appendix_PDvsControls_Padlock.csv"
+apxpdfit <- fread(path)
+
+path <- "../Brain_PFCRep_Padlock_withGLU/www/m6_Brain_PFCRep_Padlock_withGLU.csv"
+pfcpdfit <- fread(path)
+
 ```
 
 ```{r}
@@ -257,85 +265,11 @@ pC <-
 ```
 
 
-```{r}
-# Aging trends in appendix
-path <- "../Appendix_PDvsControls_Padlock/www/m6_Appendix_PDvsControls_Padlock.csv"
-apxpdfit <- fread(path)
 
-path <- "../Brain_PFCRep_Padlock_withGLU/www/m6_Brain_PFCRep_Padlock_withGLU.csv"
-pfcpdfit <- fread(path)
-
-pd <- merge(
-            apxfit[, list(
-                        ID, 
-                        C = C.DiagnosisControl.Age, 
-                        P=P.DiagnosisControl.Age, 
-                        Q = p.adjust(P.DiagnosisControl.Age, "fdr"))],
-            apxpdfit[, list(ID, logFC, P.Value, adj.P.Val)],
-            by = "ID"
-          ) %>%
-  .[P < 0.05 & P.Value < 0.05, ] %>%
-  .[, list(
-          AgingEffect = abs(C), 
-          PDEffect = abs(logFC),
-          Type = "Appendix"
-          )
-  ]
-
-pd2 <- merge(
-            pfcfit[, list(ID, C = C.GroupCTRL.Age, 
-                        P=P.GroupCTRL.Age, 
-                        Q = p.adjust(P.GroupCTRL.Age, "fdr"))],
-            pfcpdfit[, list(ID, logFC, P.Value, adj.P.Val)],
-            by = "ID"
-  ) %>%
-  .[P < 0.05 & P.Value < 0.05, ] %>%
-  .[, list( 
-          AgingEffect = abs(C), 
-          PDEffect = abs(logFC),
-          Type = "PFC"
-          )
-  ]
-
-pd <- rbind(pd, pd2)
-textLayer <-
-            pd[, cor.test(AgingEffect, PDEffect) %>% tidy, Type] %>%
-            dplyr::select(Type, estimate, p.value) %>%
-            setDT() %>%
-            .[, label := 
-                  sprintf("r = $%s$, p %s %s", 
-                          format(estimate, digits=2), 
-                          ifelse(p.value == 0, "<", "="),
-                          texP(p.value)
-                         )
-            ]
-
-pD <- 
-  pd %>%
-  ggplot(., aes(AgingEffect, PDEffect)) + 
-    geom_point(shape = 1, color = "grey") +
-    geom_smooth(method = "lm", color = "black", size = 0.5) + 
-    geom_text(data = textLayer, aes(label = TeX(label, output="character")), inherit.aes=FALSE, parse = TRUE, 
-      x = -Inf, y = Inf, size = 2.2, hjust = -0.1, vjust = 1) +
-    facet_grid(Type ~ .) +
-    scale_x_continuous(
-      labels = scales::number_format(accuracy = 0.01)) + 
-    scale_y_continuous(limits = c(0, 8)) + 
-    xlab("Healthy aging effect, absolute FC") + 
-    ylab("PD diagnosis effect, absolute FC") +
-    theme_publication()
-
-# dev.set(2)
-# ggdraw() +
-#   draw_plot(
-#     pD,
-#     x = 0, y = .2, width = 0.25, height = 0.37)
-
-```
 
 
 ```{r}
-# pE
+# pD
 
 geneList <- c("GBA","NUCKS1","SLC41A1","SIPA1L2","TMEM163","CCNT2","STK39","CHMP2B","MCCC1","TMEM175","DGKQ","FAM200B","CD38","FAM47E","SNCA","HLA-DRB6","HLA-DQA1","KLHL7","NUPL2","GPNMB","MICU3","BAG3","DLG2","MIR4697","LRRK2","OGFOD2","GCH1","TMEM229B","VPS13C","ZNF646","KAT8","ARHGAP27","CRHR1","SPPL2C","MAPT","STH","KANSL1","SYT4","LSM7","DDRGK1","ITPKB","IL1R2","SCN3A","SATB1","NCKIPSD","CDC71","ALAS1","TLR9","DNAH1","BAP1","PHF7","NISCH","STAB1","ITIH3","ITIH4","ANK2","CAMK2D","ELOVL7","ZNF184","CTSB","SORBS3","PDLIM2","C8orf58","BIN3","SH3GL2","FAM171A1","GALC","COQ7","TOX3","ATP6V0A1","PSMC3IP","TUBG2")
 
@@ -379,22 +313,32 @@ class(vdc) <- 'matrix'
 df.vdc <- as.data.frame(vdc)[-1,] %>%
   mutate(x = c(0, 1.2, 0.8, -1.2, -0.8, 0, 0),
          y = c(1.2, -0.6, 0.5, -0.6, 0.5, -1, 0))
-pE <- 
-  ggplot(df.venn) +
+
+pD <- 
+  df.venn %>% 
+  mutate(Tissue = "Appendix") %>%
+  ggplot() +
     geom_circle(aes(x0 = x, y0 = y, r = 1.5, fill = labels), alpha = .3, size = 0.25, colour = 'grey') +
     coord_fixed() +
-    theme_void() +
+    facet_grid(Tissue ~ .) +
     theme(legend.position = 'bottom') +
     scale_fill_manual(values = c('#0080FF', '#FF00FF',  '#006400'), guide=FALSE) +
     scale_colour_manual(values = c('#0080FF', '#FF00FF',  '#006400'), guide = FALSE) +
     labs(fill = NULL) +
     annotate("text", x = df.vdc$x, y = df.vdc$y, label = df.vdc$Counts, size = 2.2) + 
-    annotate('text', x = df.venn$x.labels, y = df.venn$y.labels, label = df.venn$labels, size = 2.2)
+    annotate('text', x = df.venn$x.labels, y = df.venn$y.labels, label = df.venn$labels, size = 2.2) + 
+    theme_publication() +
+    theme(
+          axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank())
+
 ```
 
 
 ```{r}
-# pF
+# pE
 
 A <- pfcfit %>%
   .[, list(ID, Chr, SNP, Gene, 
@@ -428,18 +372,203 @@ class(vdc) <- 'matrix'
 df.vdc <- as.data.frame(vdc)[-1,] %>%
   mutate(x = c(0, 1.2, 0.8, -1.2, -0.8, 0, 0),
          y = c(1.2, -0.6, 0.5, -0.6, 0.5, -1, 0))
-pF <- 
-  ggplot(df.venn) +
+pE <- 
+  df.venn %>% 
+  mutate(Tissue = "PFC") %>%
+  ggplot() +
     geom_circle(aes(x0 = x, y0 = y, r = 1.5, fill = labels), alpha = .3, size = 0.25, colour = 'grey') +
     coord_fixed() +
-    theme_void() +
+    facet_grid(Tissue ~ .) +
     theme(legend.position = 'bottom') +
     scale_fill_manual(values = c('#0080FF', '#FF00FF',  '#006400'), guide=FALSE) +
     scale_colour_manual(values = c('#0080FF', '#FF00FF',  '#006400'), guide = FALSE) +
     labs(fill = NULL) +
     annotate("text", x = df.vdc$x, y = df.vdc$y, label = df.vdc$Counts, size = 2.2) + 
-    annotate('text', x = df.venn$x.labels, y = df.venn$y.labels, label = df.venn$labels, size = 2.2)
+    annotate('text', x = df.venn$x.labels, y = df.venn$y.labels, label = df.venn$labels, size = 2.2) + 
+    theme_publication() +
+    theme(
+          axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank())
 ```
+
+```{r}
+#pF
+
+pd <- 
+  apxfit[, list(
+    Gene, ID, Chr, SNP,
+    Healthy = C.DiagnosisControl.Age,
+    HealthySLP = -sign(C.DiagnosisControl.Age) * log(P.DiagnosisControl.Age),
+    HealthyQ = fdr(P.DiagnosisControl.Age),
+    PD = C.DiagnosisPD.LBD.Age,
+    PDSLP = -sign(C.DiagnosisPD.LBD.Age) * log(P.DiagnosisPD.LBD.Age),
+    PDQ = fdr(P.DiagnosisPD.LBD.Age)
+    )]
+pd <- 
+  pd[, list(
+    Healthy = wmean(Healthy, -log(HealthyQ)),
+    PD = wmean(PD, -log(PDQ)),
+    IsHealthy = any(HealthyQ < 0.05, na.rm=TRUE),
+    IsPD = any(PDQ < 0.05, na.rm=TRUE)
+  ), Gene]
+pd <- pd[IsHealthy | IsPD]
+pd[IsHealthy == FALSE, Healthy := 0]
+pd[IsPD == FALSE, PD := 0]
+
+pd[, Label := paste(IsHealthy, IsPD)]
+pd[, Label := factor(Label, 
+                    levels = c("TRUE FALSE", "TRUE TRUE", "FALSE TRUE"),
+                    labels = c("Control aging", "Control & PD aging", "PD aging"))]
+pd <- pd[order(Label, PD+Healthy)]
+pd[, X := 1:.N]
+pd[, Tissue := "Appendix"]
+
+pF <- 
+  pd %>%  
+  ggplot(aes(x=X, xend=X, y=Healthy, yend=PD)) + 
+  geom_segment(size = 0.25, color = "grey85") +
+  geom_segment(
+      data = function(x) x[Gene %in% geneList],
+      size = 0.5, color = "orange") +   
+   geom_point(
+    aes(x = X, y = Healthy, color = "Control aging"), size = 0.25) +
+  geom_point(
+    aes(x = X, y = PD, color = "PD aging"), size = 0.25) +
+   geom_text_repel(
+      data = function(x) x[Gene %in% geneList],
+      nudge_y = 0.05, segment.size = 0.25,
+      size = 2.2,
+      aes(label = Gene)
+      ) + 
+  ylab("Aging rate,\nmean M-value/year") + 
+  facet_grid(Tissue~.) + 
+  scale_y_continuous(
+      labels = scales::number_format(accuracy = 0.01)) + 
+  scale_color_manual("", values = c(`Control aging` = '#0080FF', `PD aging` = '#FF00FF')) + 
+  theme_publication() + 
+  theme(
+      legend.position = c(0.5, 0.95),
+      axis.line.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.title.x = element_blank()
+    ) 
+
+# ggdraw() +
+#   draw_plot(
+#     pF,
+#     x = 0.29, y = .4, width = 0.71, height = 0.19)
+
+```
+
+```{r}
+#pG
+
+# PFC 
+pd <- 
+  pfcfit[, list(
+    Gene, ID, Chr, SNP,
+    Healthy = C.GroupCTRL.Age,
+    HealthySLP = -sign(C.GroupCTRL.Age) * log(P.GroupCTRL.Age),
+    HealthyQ = fdr(P.GroupCTRL.Age),
+    PD = C.GroupPD.Age,
+    PDSLP = -sign(C.GroupPD.Age) * log(P.GroupPD.Age),
+    PDQ = fdr(P.GroupPD.Age)
+    )]
+pd <- 
+  pd[, list(
+    Healthy = wmean(Healthy, -log(HealthyQ)),
+    PD = wmean(PD, -log(PDQ)),
+    IsHealthy = any(HealthyQ < 0.05, na.rm=TRUE),
+    IsPD = any(PDQ < 0.05, na.rm=TRUE)
+  ), Gene]
+pd <- pd[IsHealthy | IsPD]
+pd[IsHealthy == FALSE, Healthy := 0]
+pd[IsPD == FALSE, PD := 0]
+
+pd[, Label := paste(IsHealthy, IsPD)]
+pd[, Label := factor(Label, 
+                    levels = c("TRUE FALSE", "TRUE TRUE", "FALSE TRUE"),
+                    labels = c("Control aging", "Control & PD aging", "PD aging"))]
+pd <- pd[order(Label, PD+Healthy)]
+pd[, X := 1:.N]
+pd[, Tissue := "PFC"]
+
+
+
+pG <-
+  pd %>%  
+  ggplot(aes(x=X, xend=X, y=Healthy, yend=PD)) + 
+  geom_segment(size = 0.25, color = "grey85") +
+  geom_segment(
+      data = function(x) x[Gene %in% geneList],
+      size = 0.5, color = "orange") +   
+   geom_point(
+    aes(x = X, y = Healthy), color = '#0080FF', size = 0.25) +
+  geom_point(
+    aes(x = X, y = PD), color = '#FF00FF', size = 0.25) +
+  geom_text_repel(
+      data = function(x) x[Gene %in% geneList],
+      nudge_y = 0.01, segment.size = 0.25,
+      size = 2.2,
+      aes(label = Gene)
+      ) + 
+  ylab("Aging rate,\nmean M-value/year") +
+  xlab("Gene") + 
+  scale_y_continuous(
+      labels = scales::number_format(accuracy = 0.01)) + 
+  facet_grid(Tissue~.) + 
+  theme_publication() + 
+  theme(
+      axis.line.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_blank()
+    ) 
+
+# ggdraw() +
+#   draw_plot(
+#   pG,
+#   x = 0.47, y = .2, width = 0.53, height = 0.4)
+```
+
+
+```{r, include = TRUE, fig.width = 7.2, fig.height = 7.2, dpi = 300}
+# X11("", 7.2, 7.2)
+# dev.set(2)
+# quartz("", 7.2, 7.2, dpi=100)
+
+
+ggdraw() +
+  draw_plot(pA + guides(color =FALSE, fill = FALSE),
+    x = 0, y = 0.63, width = 0.3, height = 0.37) +
+  draw_plot(pB,
+    x = 0.3, y = 0.545, width = 0.3, height = 0.45) + 
+  draw_plot(pC,
+    x = 0.6, y = 0.64, width = 0.4, height = 0.36) +
+  draw_plot(
+    pD,
+    x = -0.05, y = .4, width = 0.4, height = 0.2) +
+  draw_plot(
+    pE,
+    x = -0.05, y = .21, width = 0.4, height = 0.2) + 
+  draw_plot(
+    pF,
+    x = 0.29, y = .4, width = 0.71, height = 0.19) + 
+  draw_plot(
+    pG,
+    x = 0.29, y = .21, width = 0.71, height = 0.20) + 
+  draw_plot_label(
+    label = c(letters[1:7]),
+    size = 10,
+    x = c(0, 0.3, 0.6, 0,    0,    0.28,  0.28),
+    y = c(1, 1,   1,   0.59, 0.42, 0.59, 0.42))
+
+
+ggsave("../Figure4/figure4.png", width = 7.2, height = 7.2, dpi = 300, units = "in")
+```
+
 
 
 
@@ -545,195 +674,4 @@ plotGeneTrace <- function(gene="SNCA", qT = 0.05, stacking = "squish", histart, 
 # plotGeneTrace(gene="SNCA", qT=1, histart=90645250, hiend=90759447, extend.left=1000, sizes=c(1,3,4))
 # plotGeneTrace(gene="MTOR", qT = 0.2, histart=11166588, hiend=11322608, sizes = c(1, 2, 3, 4) )
 
-```
-
-
-
-
-
-```{r}
-#pG
-
-
-# Apendix
-
-pd <- 
-  apxfit[, list(
-    Gene, ID, Chr, SNP,
-    Healthy = C.DiagnosisControl.Age,
-    HealthySLP = -sign(C.DiagnosisControl.Age) * log(P.DiagnosisControl.Age),
-    HealthyQ = fdr(P.DiagnosisControl.Age),
-    PD = C.DiagnosisPD.LBD.Age,
-    PDSLP = -sign(C.DiagnosisPD.LBD.Age) * log(P.DiagnosisPD.LBD.Age),
-    PDQ = fdr(P.DiagnosisPD.LBD.Age)
-    )]
-pd <- 
-  pd[, list(
-    Healthy = wmean(Healthy, -log(HealthyQ)),
-    PD = wmean(PD, -log(PDQ)),
-    IsHealthy = any(HealthyQ < 0.05, na.rm=TRUE),
-    IsPD = any(PDQ < 0.05, na.rm=TRUE)
-  ), Gene]
-pd <- pd[IsHealthy | IsPD]
-pd[IsHealthy == FALSE, Healthy := 0]
-pd[IsPD == FALSE, PD := 0]
-
-
-pd1 <- 
-  pd[IsHealthy == TRUE & IsPD == FALSE] %>%
-  .[order(Healthy)] %>%
-  .[, list(Category = " Control Aging", 
-           Y = 1:.N,
-           Gene, 
-           Healthy, PD)]
-pd2 <-
-  pd[IsHealthy == FALSE & IsPD == TRUE] %>%
-  .[order(PD)] %>%
-  .[, list(Category = " PD Aging",
-           Y = 1:.N,
-           Gene, 
-           Healthy, PD)]
-
-pd3 <- 
-  pd[IsHealthy == TRUE & IsPD == TRUE] %>%
-  .[order(PD)] %>%
-  .[, list(Category = "Control & PD Aging",
-           Y = 1:.N,
-           Gene, 
-           Healthy, PD)]
-pdapx <- 
-  list(pd1, pd2, pd3) %>%
-  rbindlist %>%
-  .[, Tissue := "Appendix"]
-
-
-# PFC 
-pd <- 
-  pfcfit[, list(
-    Gene, ID, Chr, SNP,
-    Healthy = C.GroupCTRL.Age,
-    HealthySLP = -sign(C.GroupCTRL.Age) * log(P.GroupCTRL.Age),
-    HealthyQ = fdr(P.GroupCTRL.Age),
-    PD = C.GroupPD.Age,
-    PDSLP = -sign(C.GroupPD.Age) * log(P.GroupPD.Age),
-    PDQ = fdr(P.GroupPD.Age)
-    )]
-pd <- 
-  pd[, list(
-    Healthy = wmean(Healthy, -log(HealthyQ)),
-    PD = wmean(PD, -log(PDQ)),
-    IsHealthy = any(HealthyQ < 0.05, na.rm=TRUE),
-    IsPD = any(PDQ < 0.05, na.rm=TRUE)
-  ), Gene]
-pd <- pd[IsHealthy | IsPD]
-pd[IsHealthy == FALSE, Healthy := 0]
-pd[IsPD == FALSE, PD := 0]
-
-
-pd1 <- 
-  pd[IsHealthy == TRUE & IsPD == FALSE] %>%
-  .[order(Healthy)] %>%
-  .[, list(Category = " Control Aging", 
-           Y = 1:.N,
-           Gene, 
-           Healthy, PD)]
-pd2 <-
-  pd[IsHealthy == FALSE & IsPD == TRUE] %>%
-  .[order(PD)] %>%
-  .[, list(Category = " PD Aging",
-           Y = 1:.N,
-           Gene, 
-           Healthy, PD)]
-
-pd3 <- 
-  pd[IsHealthy == TRUE & IsPD == TRUE] %>%
-  .[order(PD)] %>%
-  .[, list(Category = "Control & PD Aging",
-           Y = 1:.N,
-           Gene, 
-           Healthy, PD)]
-
-
-pdpfc <- 
-  list(pd1, pd2, pd3) %>%
-  rbindlist %>%
-  .[, Tissue := "PFC"]
-
-
-pG <- 
-  list(pdapx, pdpfc) %>%
-  rbindlist %>%
-  ggplot(aes(x = Healthy, xend = PD, y = Y, yend = Y)) + 
-  geom_segment(size = 0.25, color = "grey85") + 
-  geom_segment(
-    data = function(x) x[Gene %in% geneList],
-    size = 0.5, color = "orange") + 
-  geom_point(
-    data = function(x) x[Category != " PD Aging"],
-    aes(x = Healthy), color = '#0080FF', size = 0.25) +
-  geom_point(
-    data = function(x) x[Category != " Control Aging"],
-    aes(x = PD), color = '#FF00FF', size = 0.25) +
-  geom_vline(xintercept = 0, color = "grey60", size = 0.5, linetype=1) + 
-  geom_text_repel(
-    data = function(x) x[Gene %in% geneList & Category != "Control & PD Aging"],
-    aes(x = max(Healthy, PD), label = Gene),
-    size = 2.7, force = 10,
-    xlim = c(0.03, NA), ylim = c(NA, 130),
-    segment.size = 0.25, segment.color = "grey60"
-    ) +
-  geom_text_repel(
-    data = function(x) x[Gene %in% geneList & Category == "Control & PD Aging"],
-    aes(x = max(Healthy, PD), label = Gene),
-    size = 2.7, force = 10,
-    xlim = c(NA, -0.1), ylim = c(NA, 130),
-    segment.size = 0.25, segment.color = "grey60"
-    ) +
-  xlab("Aging rate") + 
-  facet_grid(Tissue~Category, scales="free") + 
-  theme_publication() + 
-  theme(
-    axis.line.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.title.y = element_blank(),
-    axis.text.y = element_blank()
-  )
-# ggdraw() + 
-#   draw_plot(
-#   pG,
-#   x = 0.47, y = .2, width = 0.53, height = 0.4)
-```
-
-
-```{r, include = TRUE, fig.width = 7.2, fig.height = 7.2, dpi = 300}
-# X11("", 7.2, 7.2)
-# dev.set(2)
-# quartz("", 7.2, 7.2, dpi=100)
-ggdraw() +
-  draw_plot(pA + guides(color =FALSE, fill = FALSE),
-    x = 0, y = 0.63, width = 0.3, height = 0.37) +
-  draw_plot(pB,
-    x = 0.3, y = 0.545, width = 0.3, height = 0.45) + 
-  draw_plot(pC,
-    x = 0.6, y = 0.64, width = 0.4, height = 0.36) +
-  draw_plot(
-    pD,
-    x = 0, y = .2, width = 0.25, height = 0.37) + 
-  draw_plot(
-    pE,
-    x = 0.23, y = .4, width = 0.26, height = 0.17) +
-  draw_plot(
-    pF,
-    x = 0.23, y = .21, width = 0.26, height = 0.18) +
-  draw_plot(
-    pG,
-    x = 0.47, y = .2, width = 0.53, height = 0.4) +
-  draw_plot_label(
-    label = c(letters[1:7]),
-    size = 10,
-    x = c(0, 0.3, 0.6, 0, 0.25, 0.25, 0.455),
-    y = c(1, 1,   1,   0.59, 0.59, 0.42, 0.59))
-
-
-ggsave("../Figure4/figure4.png", width = 7.2, height = 7.2, dpi = 300, units = "in")
 ```
