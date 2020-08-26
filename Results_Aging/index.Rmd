@@ -582,7 +582,7 @@ pd %>%
     xlab("Healthy aging effect, absolute FC") + 
     ylab("PD diagnosis effect, absolute FC") +
     geom_text(data = textLayer, aes(label = TeX(label, output="character")), inherit.aes=FALSE, parse = TRUE, 
-      x = -Inf, y = Inf, size = 2.7, hjust = -0.1, vjust = 1) +
+      x = -Inf, y = Inf, hjust = -0.1, vjust = 1) +
     facet_grid(Aging ~ Tissue) +
     scale_x_continuous(
       labels = scales::number_format(accuracy = 0.01)) + 
