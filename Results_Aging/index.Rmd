@@ -25,20 +25,44 @@ source("../code/genomicEnrichment.R")
 annotations <- cache(foo=loadHumanAnnotations,
                      fname = "annotations.RDS")
 pathways <- readRDS("../Discover_Pathways/humanPathways.RDS")
+
+
+wmean <- function(x, w) {
+  i <- is.na(x) | is.na(w)
+  x <- x[!i]; w <- w[!i]
+  weighted.mean(x, w, na.rm=TRUE)
+}
+
+fdr <- function(x) { p.adjust(x, "fdr")}
+
 ```
 
 # Appendix, padlocks
 
 ```{r}
 apax <- fread("../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padlock.csv")
+apx <- fread("../Appendix_PDvsControls_Padlock/www/m6_Appendix_PDvsControls_Padlock.csv")
 apad <- readRDS("../Appendix_AgeAcceleration_Padlock/www/m6_methylation.RDS")
 ```
+
+```{r}
+url <- "../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padlock.csv"
+stopifnot(file.exists(url))
+```
+
+- **[Additional file 11](`r url`) DNA methylation changes in the aging appendix of healthy individuals and PD patients.**
+
 
 ```{r, include=TRUE, results='asis'}
 n <- nrow(apax)
 glue("- Number of loci {n}")
 t <- apad$key[, table(Diagnosis)]
 glue("- Number of PD cases: {t[2]} and controls: {t[1]}")
+```
+
+Aging among controls and dominant direction of methylation change
+
+```{r, include=TRUE, results='asis'}
 n <- apax[, sum(p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, na.rm=TRUE)]
 glue("- Number of significant loci {n}")
 n <- apax[p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, length(unique(Gene))]
@@ -46,9 +70,6 @@ glue("- Number of genes affected {n}")
 r <- apad$key[Diagnosis == "Control", range(Age) %>% paste(collapse=":")]
 glue("- Age range of healthy controls {r}")
 ```
-
-
-Dominant direction of methylation
 
 ```{r, include=TRUE}
 t <-
@@ -71,11 +92,108 @@ kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
 
-```{r}
-url <- "../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padlock.csv"
-stopifnot(file.exists(url))
+Aging among PD samples and dominant direction of methylation change
+
+```{r, include=TRUE, results='asis'}
+n <- apax[, sum(p.adjust(P.DiagnosisPD.LBD.Age, "fdr") < 0.05, na.rm=TRUE)]
+glue("- Number of significant loci {n}")
+n <- apax[p.adjust(P.DiagnosisPD.LBD.Age, "fdr") < 0.05, length(unique(Gene))]
+glue("- Number of genes affected {n}")
 ```
 
+```{r, include=TRUE}
+t <-
+  apax[, list(
+            Significant = ifelse(p.adjust(P.DiagnosisPD.LBD.Age, "fdr") < 0.05, "Significant", "NS"), 
+            Direction = ifelse(C.DiagnosisPD.LBD.Age < 0, "Hypo-M", "Hyper-M")
+           )] %>%
+  .[, table(Significant, Direction)] %>%
+  .[c("NS", "Significant"), c("Hypo-M", "Hyper-M")]
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+              full_width = FALSE)
+
+# Show fisher test result
+t %>% fisher.test %>% 
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+ 
+## Overlap of affected cytosines
+
+Overlap of cytosines affected by PD or aging in control and PD samples
+
+```{r, include=TRUE}
+dt <-
+  merge(
+    apx[, list(ID, PDAffected = ifelse(adj.P.Val < 0.05, "Significant", "NS"))],
+    apax[,
+      list(
+        ID,
+        ControlAging = ifelse(p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, "Significant", "NS"),
+        PDAging      = ifelse(p.adjust(P.DiagnosisPD.LBD.Age, "fdr") < 0.05, "Significant", "NS")
+        )],
+    by = "ID")
+foo <- function(dt, A, B, title) {
+  dt[, table(get(A), get(B))] %>%
+  fisher.test %>%
+  broom::tidy() %>% 
+  mutate(Test = title) %>%
+  select(Test, estimate, p.value, conf.low, conf.high)
+}
+
+list(
+  foo(dt, "PDAffected", "ControlAging", title = "PD affected vs aging in controls"),
+  foo(dt, "PDAffected", "PDAging", title = "PD affected vs aging in PDs"),
+  foo(dt, "ControlAging", "PDAging", title = "Aging in controls vs aging in PDs")
+  ) %>%
+purrr::map(as.data.table) %>%
+rbindlist %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+
+## Overlap of affected genes
+
+Overlap of ALP genes aging in control and PD samples
+
+```{r, include=TRUE}
+A <- apax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.DiagnosisControl.Age, 
+    P = P.DiagnosisControl.Age, 
+    Q = p.adjust(P.DiagnosisControl.Age, "fdr"))
+  ] %>%
+  .[, list(HealthyAging = wmean(FC, -log(P)), IsHealthyAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+B <- apax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.DiagnosisPD.LBD.Age, 
+    P = P.DiagnosisPD.LBD.Age, 
+    Q = p.adjust(P.DiagnosisPD.LBD.Age, "fdr"))
+  ] %>%
+  .[, list(PDAging = wmean(FC, -log(P)), IsPDAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+C  <- apx %>%
+  .[, list(PD = wmean(logFC, -log(P.Value)), IsPD = any(adj.P.Val < 0.05, na.rm=TRUE)), Gene]
+dt <- merge(merge(A, B, by = "Gene"), C, by = "Gene")
+
+list(
+  foo(dt, "IsPD", "IsHealthyAging", title = "PD affected vs aging in controls"),
+  foo(dt, "IsPD", "IsPDAging", title = "PD affected vs aging in PDs"),
+  foo(dt, "IsHealthyAging", "IsPDAging", title = "Aging in controls vs aging in PDs")
+  ) %>%
+purrr::map(as.data.table) %>%
+rbindlist %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+## Enrichment of genomic regions
 
 ```{r}
 # touch()
@@ -156,9 +274,6 @@ ggarrange(myplots[[1]], myplots[[2]], myplots[[3]],
 
 
 
-- **[Additional file 11](`r url`) DNA methylation changes in the aging appendix of healthy individuals and PD patients.**
-
-
 # Appendix, RNA-seq
 
 ```{r}
@@ -203,8 +318,17 @@ kable_styling(bootstrap_options = c("hover"))
 
 ```{r}
 pfcax <- fread("../Brain_AgeAcceleration_Padlock/www/m6_Brain_AgeAcceleration_Padlock.csv")
+pfcx <- fread("../Brain_PFCRep_Padlock_withGLU/www/m6_Brain_PFCRep_Padlock_withGLU.csv")
 pfcad <- readRDS("../Brain_AgeAcceleration_Padlock/www/m6_methylation.RDS")
 ```
+
+```{r}
+url <- "../Brain_AgeAcceleration_Padlock/www/m6_Brain_AgeAcceleration_Padlock.csv"
+stopifnot(file.exists(url))
+```
+
+- **[Additional file 12](`r url`) DNA methylation changes in aging prefrontal cortex neurons of healthy individuals and PD patients.**
+
 
 ```{r, include=TRUE, results='asis'}
 n <- nrow(pfcax[Type == "CG"])
@@ -213,13 +337,16 @@ n <- nrow(pfcax[Type != "CG"])
 glue("- Number of CpH loci {n}")
 t <- pfcad$key[, table(Group)]
 glue("- Number of PD cases: {t[2]} and controls: {t[1]}")
+```
+
+Aging among controls and dominant direction of methylation change
+
+```{r, include=TRUE, results='asis'}
 n <- pfcax[, sum(p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, na.rm=TRUE)]
 glue("- Number of significant loci {n}")
 n <- pfcax[p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, length(unique(Gene))]
 glue("- Number of genes affected {n}")
 ```
-
-Dominant direction of methylation
 
 ```{r, include=TRUE}
 t <-
@@ -242,12 +369,106 @@ kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
 
-```{r}
-url <- "../Brain_AgeAcceleration_Padlock/www/m6_Brain_AgeAcceleration_Padlock.csv"
-stopifnot(file.exists(url))
+Aging among PD samples and dominant direction of methylation change
+
+```{r, include=TRUE, results='asis'}
+n <- pfcax[, sum(p.adjust(P.GroupPD.Age, "fdr") < 0.05, na.rm=TRUE)]
+glue("- Number of significant loci {n}")
+n <- pfcax[p.adjust(P.GroupPD.Age, "fdr") < 0.05, length(unique(Gene))]
+glue("- Number of genes affected {n}")
 ```
 
-- **[Additional file 12](`r url`) DNA methylation changes in aging prefrontal cortex neurons of healthy individuals and PD patients.**
+```{r, include=TRUE}
+t <-
+  pfcax[, list(
+            Significant = ifelse(p.adjust(P.GroupPD.Age, "fdr") < 0.05, "Significant", "NS"), 
+            Direction = ifelse(C.GroupPD.Age < 0, "Hypo-M", "Hyper-M")
+           )] %>%
+  .[, table(Significant, Direction)] %>%
+  .[c("NS", "Significant"), c("Hypo-M", "Hyper-M")]
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+              full_width = FALSE)
+
+# Show fisher test result
+t %>% fisher.test %>% 
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+## Overlap of affected cytosines
+
+Overlap of cytosines affected by PD or aging in control and PD samples
+
+```{r, include=TRUE}
+dt <-
+  merge(
+    pfcx[, list(ID, PDAffected = ifelse(adj.P.Val < 0.05, "Significant", "NS"))],
+    pfcax[,
+      list(
+        ID,
+        ControlAging = ifelse(p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, "Significant", "NS"),
+        PDAging      = ifelse(p.adjust(P.GroupPD.Age, "fdr") < 0.05, "Significant", "NS")
+        )],
+    by = "ID")
+foo <- function(dt, A, B, title) {
+  dt[, table(get(A), get(B))] %>%
+  fisher.test %>%
+  broom::tidy() %>% 
+  mutate(Test = title) %>%
+  select(Test, estimate, p.value, conf.low, conf.high)
+}
+
+list(
+  foo(dt, "PDAffected", "ControlAging", title = "PD affected vs aging in controls"),
+  foo(dt, "PDAffected", "PDAging", title = "PD affected vs aging in PDs"),
+  foo(dt, "ControlAging", "PDAging", title = "Aging in controls vs aging in PDs")
+  ) %>%
+purrr::map(as.data.table) %>%
+rbindlist %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+
+## Overlap of affected genes
+
+Overlap of ALP genes aging in control and PD samples
+
+```{r, include=TRUE}
+A <- pfcax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.GroupCTRL.Age, 
+    P = P.GroupCTRL.Age, 
+    Q = p.adjust(P.GroupCTRL.Age, "fdr"))
+  ] %>%
+  .[, list(HealthyAging = wmean(FC, -log(P)), IsHealthyAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+B <- pfcax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.GroupPD.Age, 
+    P = P.GroupPD.Age, 
+    Q = p.adjust(P.GroupPD.Age, "fdr"))
+  ] %>%
+  .[, list(PDAging = wmean(FC, -log(P)), IsPDAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+C  <- pfcx %>%
+  .[, list(PD = wmean(logFC, -log(P.Value)), IsPD = any(adj.P.Val < 0.05, na.rm=TRUE)), Gene]
+dt <- merge(merge(A, B, by = "Gene"), C, by = "Gene")
+
+list(
+  foo(dt, "IsPD", "IsHealthyAging", title = "PD affected vs aging in controls"),
+  foo(dt, "IsPD", "IsPDAging", title = "PD affected vs aging in PDs"),
+  foo(dt, "IsHealthyAging", "IsPDAging", title = "Aging in controls vs aging in PDs")
+  ) %>%
+purrr::map(as.data.table) %>%
+rbindlist %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
 
 
 # Olfactory bulb, padlock
