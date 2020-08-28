@@ -560,10 +560,10 @@ ggdraw() +
     pG,
     x = 0.29, y = .21, width = 0.71, height = 0.20) + 
   draw_plot_label(
-    label = c(letters[1:7]),
+    label = c(letters[1:5]),
     size = 10,
-    x = c(0, 0.3, 0.6, 0,    0,    0.28,  0.28),
-    y = c(1, 1,   1,   0.59, 0.42, 0.59, 0.42))
+    x = c(0, 0.3, 0.6, 0,    0.28),
+    y = c(1, 1,   1,   0.59, 0.59))
 
 
 ggsave("../Figure4/figure4.png", width = 7.2, height = 7.2, dpi = 300, units = "in")

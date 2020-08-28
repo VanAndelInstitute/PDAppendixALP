@@ -193,6 +193,34 @@ kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
 
+## Age acceleration
+
+If we look into the genes that are aging in both, control and PD samples, can we see some trend in directionality?
+
+```{r, include=TRUE}
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, ] %>%
+.[, list(Gene, HealthyDir = sign(HealthyAging), HealthyAging, PDAging)] %>%
+reshape2::melt(id.vars=1:2) %>%
+ggpaired(x = "variable", y = "value",
+         color = "variable", line.color = "gray", line.size = 0.4,
+         palette = "jco")+
+  stat_compare_means(paired = TRUE)
+
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  table(sign(HealthyAging), sign(PDAging))] %>%
+  fisher.test
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  t.test(abs(HealthyAging), abs(PDAging), paired=TRUE)]
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  list(mean(abs(HealthyAging)), mean(abs(PDAging)))]
+
+
+```
+
+
 ## Enrichment of genomic regions
 
 ```{r}
@@ -468,6 +496,32 @@ purrr::map(as.data.table) %>%
 rbindlist %>%
 kable() %>%
 kable_styling(bootstrap_options = c("hover"))
+```
+
+## Age acceleration
+
+If we look into the genes that are aging in both, control and PD samples, can we see some trend in directionality?
+
+```{r, include=TRUE}
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, ] %>%
+.[, list(Gene, HealthyDir = sign(HealthyAging), HealthyAging, PDAging)] %>%
+reshape2::melt(id.vars=1:2) %>%
+ggpaired(x = "variable", y = "value",
+         color = "variable", line.color = "gray", line.size = 0.4,
+         palette = "jco")+
+  stat_compare_means(paired = TRUE)
+
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  table(sign(HealthyAging), sign(PDAging))] %>%
+  fisher.test
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  t.test(abs(HealthyAging), abs(PDAging), paired=TRUE)]
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  list(mean(abs(HealthyAging)), mean(abs(PDAging)))]
+  
 ```
 
 
