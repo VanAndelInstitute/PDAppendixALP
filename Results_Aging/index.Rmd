@@ -862,61 +862,62 @@ pd %>%
 ```
 
 
-Aging rate in appendix transcriptome
-
+<!-- Aging rate in appendix transcriptome -->
+<!-- 
 ```{r, include=TRUE, fig.cap="**Figure S10. The aging rate in healthy and PD samples of appendix transcritome. **"}
-fdr <- function(x) { p.adjust(x, "fdr")}
-pd <- 
-  apar[, list(
-    Gene=SYMBOL, 
-    Healthy = C.DiagnosisControl.Age,
-    HealthySLP = -sign(C.DiagnosisControl.Age) * log(P.DiagnosisControl.Age),
-    HealthyQ = fdr(P.DiagnosisControl.Age),
-    PD = C.DiagnosisPD.LBD.Age,
-    PDSLP = -sign(C.DiagnosisPD.LBD.Age) * log(P.DiagnosisPD.LBD.Age),
-    PDQ = fdr(P.DiagnosisPD.LBD.Age)
-    )]
-pd <- 
-  pd[, list(
-    Healthy,
-    PD,
-    IsHealthy = HealthyQ < 0.05,
-    IsPD = PDQ < 0.05
-  ), Gene]
-pd <- pd[IsHealthy | IsPD]
-pd[IsHealthy == FALSE, Healthy := 0]
-pd[IsPD == FALSE, PD := 0]
+# fdr <- function(x) { p.adjust(x, "fdr")}
+# pd <- 
+#   apar[, list(
+#     Gene=SYMBOL, 
+#     Healthy = C.DiagnosisControl.Age,
+#     HealthySLP = -sign(C.DiagnosisControl.Age) * log(P.DiagnosisControl.Age),
+#     HealthyQ = fdr(P.DiagnosisControl.Age),
+#     PD = C.DiagnosisPD.LBD.Age,
+#     PDSLP = -sign(C.DiagnosisPD.LBD.Age) * log(P.DiagnosisPD.LBD.Age),
+#     PDQ = fdr(P.DiagnosisPD.LBD.Age)
+#     )]
+# pd <- 
+#   pd[, list(
+#     Healthy,
+#     PD,
+#     IsHealthy = HealthyQ < 0.05,
+#     IsPD = PDQ < 0.05
+#   ), Gene]
+# pd <- pd[IsHealthy | IsPD]
+# pd[IsHealthy == FALSE, Healthy := 0]
+# pd[IsPD == FALSE, PD := 0]
 
-pd[, Label := paste(IsHealthy, IsPD)]
-pd[, Label := factor(Label, 
-                    levels = c("TRUE FALSE", "TRUE TRUE", "FALSE TRUE"),
-                    labels = c("Control aging", "Control & PD aging", "PD aging"))]
-pd <- pd[order(Label, PD+Healthy)]
-pd[, X := 1:.N]
+# pd[, Label := paste(IsHealthy, IsPD)]
+# pd[, Label := factor(Label, 
+#                     levels = c("TRUE FALSE", "TRUE TRUE", "FALSE TRUE"),
+#                     labels = c("Control aging", "Control & PD aging", "PD aging"))]
+# pd <- pd[order(Label, PD+Healthy)]
+# pd[, X := 1:.N]
 
-geneList <- c("GBA","NUCKS1","SLC41A1","SIPA1L2","TMEM163","CCNT2","STK39","CHMP2B","MCCC1","TMEM175","DGKQ","FAM200B","CD38","FAM47E","SNCA","HLA-DRB6","HLA-DQA1","KLHL7","NUPL2","GPNMB","MICU3","BAG3","DLG2","MIR4697","LRRK2","OGFOD2","GCH1","TMEM229B","VPS13C","ZNF646","KAT8","ARHGAP27","CRHR1","SPPL2C","MAPT","STH","KANSL1","SYT4","LSM7","DDRGK1","ITPKB","IL1R2","SCN3A","SATB1","NCKIPSD","CDC71","ALAS1","TLR9","DNAH1","BAP1","PHF7","NISCH","STAB1","ITIH3","ITIH4","ANK2","CAMK2D","ELOVL7","ZNF184","CTSB","SORBS3","PDLIM2","C8orf58","BIN3","SH3GL2","FAM171A1","GALC","COQ7","TOX3","ATP6V0A1","PSMC3IP","TUBG2")
+# geneList <- c("GBA","NUCKS1","SLC41A1","SIPA1L2","TMEM163","CCNT2","STK39","CHMP2B","MCCC1","TMEM175","DGKQ","FAM200B","CD38","FAM47E","SNCA","HLA-DRB6","HLA-DQA1","KLHL7","NUPL2","GPNMB","MICU3","BAG3","DLG2","MIR4697","LRRK2","OGFOD2","GCH1","TMEM229B","VPS13C","ZNF646","KAT8","ARHGAP27","CRHR1","SPPL2C","MAPT","STH","KANSL1","SYT4","LSM7","DDRGK1","ITPKB","IL1R2","SCN3A","SATB1","NCKIPSD","CDC71","ALAS1","TLR9","DNAH1","BAP1","PHF7","NISCH","STAB1","ITIH3","ITIH4","ANK2","CAMK2D","ELOVL7","ZNF184","CTSB","SORBS3","PDLIM2","C8orf58","BIN3","SH3GL2","FAM171A1","GALC","COQ7","TOX3","ATP6V0A1","PSMC3IP","TUBG2")
 
-require(ggrepel)
-pd %>%
-  ggplot(aes(x=X, xend=X, y=Healthy, yend=PD)) + 
-  geom_segment(size = 0.25, color = "grey85") + 
-  geom_segment(
-      data = function(x) x[Gene %in% geneList],
-      size = 0.5, color = "orange") +   
-  geom_point(
-    aes(x = X, y = Healthy), color = '#0080FF', size = 0.25) +
-  geom_point(
-    aes(x = X, y = PD), color = '#FF00FF', size = 0.25) +
-  geom_text_repel(
-    data = function(x) x[Gene %in% geneList],
-    aes(label = Gene)
-    ) + 
-  ylab("Aging rate, logCPM/year") + 
-  xlab("Gene") + 
-  theme_bw(base_size=14) + 
-  theme(
-      axis.line.x = element_blank(),
-      axis.ticks.x = element_blank(),
-      axis.text.x = element_blank()
-    ) 
+# require(ggrepel)
+# pd %>%
+#   ggplot(aes(x=X, xend=X, y=Healthy, yend=PD)) + 
+#   geom_segment(size = 0.25, color = "grey85") + 
+#   geom_segment(
+#       data = function(x) x[Gene %in% geneList],
+#       size = 0.5, color = "orange") +   
+#   geom_point(
+#     aes(x = X, y = Healthy), color = '#0080FF', size = 0.25) +
+#   geom_point(
+#     aes(x = X, y = PD), color = '#FF00FF', size = 0.25) +
+#   geom_text_repel(
+#     data = function(x) x[Gene %in% geneList],
+#     aes(label = Gene)
+#     ) + 
+#   ylab("Aging rate, logCPM/year") + 
+#   xlab("Gene") + 
+#   theme_bw(base_size=14) + 
+#   theme(
+#       axis.line.x = element_blank(),
+#       axis.ticks.x = element_blank(),
+#       axis.text.x = element_blank()
+#     ) 
 ```
+ -->
