@@ -198,14 +198,7 @@ kable_styling(bootstrap_options = c("hover"))
 If we look into the genes that are aging in both, control and PD samples, can we see some trend in directionality?
 
 ```{r, include=TRUE}
-dt[IsHealthyAging==TRUE & IsPDAging == TRUE, ] %>%
-.[, list(Gene, HealthyDir = sign(HealthyAging), HealthyAging, PDAging)] %>%
-reshape2::melt(id.vars=1:2) %>%
-ggpaired(x = "variable", y = "value",
-         color = "variable", line.color = "gray", line.size = 0.4,
-         palette = "jco")+
-  stat_compare_means(paired = TRUE)
-
+dt[, table(IsHealthyAging=IsHealthyAging==TRUE, IsPDAging = IsPDAging == TRUE)]
 
 dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
   table(sign(HealthyAging), sign(PDAging))] %>%
@@ -214,9 +207,19 @@ dt[IsHealthyAging==TRUE & IsPDAging == TRUE,
 dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
   t.test(abs(HealthyAging), abs(PDAging), paired=TRUE)]
 
+
 dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
   list(mean(abs(HealthyAging)), mean(abs(PDAging)))]
 
+
+```
+
+```{r}
+# How can I test whether the agreement is more likely at some point?
+
+dt[IsHealthyAging & IsPDAging,
+  table(sign(HealthyAging), sign(PDAging))] %>% 
+  fisher.test()
 
 ```
 
@@ -341,6 +344,8 @@ broom::tidy() %>%
 knitr::kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
+
+
 
 # Prefrontal cortex neurons, padlock
 
@@ -503,14 +508,7 @@ kable_styling(bootstrap_options = c("hover"))
 If we look into the genes that are aging in both, control and PD samples, can we see some trend in directionality?
 
 ```{r, include=TRUE}
-dt[IsHealthyAging==TRUE & IsPDAging == TRUE, ] %>%
-.[, list(Gene, HealthyDir = sign(HealthyAging), HealthyAging, PDAging)] %>%
-reshape2::melt(id.vars=1:2) %>%
-ggpaired(x = "variable", y = "value",
-         color = "variable", line.color = "gray", line.size = 0.4,
-         palette = "jco")+
-  stat_compare_means(paired = TRUE)
-
+dt[, table(IsHealthyAging=IsHealthyAging==TRUE, IsPDAging=IsPDAging == TRUE)]
 
 dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
   table(sign(HealthyAging), sign(PDAging))] %>%
@@ -521,9 +519,8 @@ dt[IsHealthyAging==TRUE & IsPDAging == TRUE,
 
 dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
   list(mean(abs(HealthyAging)), mean(abs(PDAging)))]
-  
-```
 
+```
 
 # Olfactory bulb, padlock
 
@@ -854,7 +851,7 @@ pd %>%
   ggplot(., aes(abs(Age), abs(PD))) + 
     geom_point(shape = 1, color = "grey") +
     geom_smooth(method = "lm", color = "black", size = 0.5) + 
-    xlab("Healthy aging effect, absolute FC") + 
+    xlab("Epigenetic aging rate, absolute FC") + 
     ylab("PD diagnosis effect, absolute FC") +
     geom_text(data = textLayer, aes(label = TeX(label, output="character")), inherit.aes=FALSE, parse = TRUE, 
       x = -Inf, y = Inf, hjust = -0.1, vjust = 1) +
