@@ -569,9 +569,3 @@ ggdraw() +
 ggsave("../Figure4/figure4.png", width = 7.2, height = 7.2, dpi = 300, units = "in")
 ```
 
-
-
-
-```{r}
-
-```
