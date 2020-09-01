@@ -19,6 +19,7 @@ require(broom)
 require(knitr)
 require(RobustRankAggreg)
 require(cowplot)
+pacman::p_load("Gviz")
 source("../code/common.R")
 source("../code/pformat.R")
 source("../code/genomicEnrichment.R")
@@ -142,7 +143,7 @@ foo <- function(dt, A, B, title) {
   fisher.test %>%
   broom::tidy() %>% 
   mutate(Test = title) %>%
-  select(Test, estimate, p.value, conf.low, conf.high)
+  dplyr::select(Test, estimate, p.value, conf.low, conf.high)
 }
 
 list(
@@ -452,7 +453,7 @@ foo <- function(dt, A, B, title) {
   fisher.test %>%
   broom::tidy() %>% 
   mutate(Test = title) %>%
-  select(Test, estimate, p.value, conf.low, conf.high)
+  dplyr::select(Test, estimate, p.value, conf.low, conf.high)
 }
 
 list(
@@ -835,7 +836,7 @@ pd <- rbindlist(list(pd, X, X2))
 
 textLayer <-
             pd[, cor.test(abs(Age), abs(PD)) %>% broom::tidy(), list(Tissue, Aging)] %>%
-            select(Tissue, Aging, estimate, p.value) %>%
+            dplyr::select(Tissue, Aging, estimate, p.value) %>%
             setDT() %>%
             .[, label := 
                   sprintf("r = $%s$, p %s %s", 
@@ -862,7 +863,7 @@ pd %>%
 ```
 
 
-<!-- Aging rate in appendix transcriptome -->
+<!-- Aging rate in appendix transcriptome --> 
 <!-- 
 ```{r, include=TRUE, fig.cap="**Figure S10. The aging rate in healthy and PD samples of appendix transcritome. **"}
 # fdr <- function(x) { p.adjust(x, "fdr")}
@@ -921,3 +922,126 @@ pd %>%
 #     ) 
 ```
  -->
+
+# Some individual gene maps
+
+```{r}
+
+# Gene traces
+plotGeneTrace <- function(gene="SNCA", qT = 0.05, stacking = "squish", histart=90645250, hiend=90759447, ...) {
+  require(biomaRt)
+  require(Gviz)
+
+  # Appendix
+  pd <- 
+    apax[, list(
+      Gene, ID, Chr, SNP,
+      Healthy = C.DiagnosisControl.Age,
+      HealthySLP = -sign(C.DiagnosisControl.Age) * log(P.DiagnosisControl.Age),
+      HealthyQ = fdr(P.DiagnosisControl.Age),
+      PD = C.DiagnosisPD.LBD.Age,
+      PDSLP = -sign(C.DiagnosisPD.LBD.Age) * log(P.DiagnosisPD.LBD.Age),
+      PDQ = fdr(P.DiagnosisPD.LBD.Age)
+      )]
+  pd <- merge(
+    pd[Gene == gene],
+    apx[Gene == gene],
+    by = c("ID", "Chr", "SNP", "Gene"))
+
+  # PFC
+  pd2 <- 
+    pfcax[, list(
+      Gene, ID, Chr, SNP,
+      Healthy = C.GroupCTRL.Age,
+      HealthySLP = -sign(C.GroupCTRL.Age) * log(P.GroupCTRL.Age),
+      HealthyQ = fdr(P.GroupCTRL.Age),
+      PD = C.GroupPD.Age,
+      PDSLP = -sign(C.GroupPD.Age) * log(P.GroupPD.Age),
+      PDQ = fdr(P.GroupPD.Age)
+      )]
+  pd2 <- merge(
+    pd2[Gene == gene],
+    pfcx[Gene == gene],
+    by = c("ID", "Chr", "SNP", "Gene"))
+
+  chr <- pd[, unique(Chr)]
+  g(from, to) %=% range(pd[, range(SNP)], pd2[, range(SNP)])
+  itrack <- IdeogramTrack(genome = "hg19", chromosome = chr, name = chr)
+  gtrack <- GenomeAxisTrack(name = chr)
+
+
+  bm <- useMart(host = "grch37.ensembl.org", 
+                biomart = "ENSEMBL_MART_ENSEMBL",
+                dataset = "hsapiens_gene_ensembl")
+  biomTrack <- BiomartGeneRegionTrack(genome = "hg19", name = "ENSEMBL", 
+                                      symbol = gene, biomart = bm,
+                                      shape="arrow",
+                                      cex = 0.5)
+
+  # data tracks
+  # trackList <- list(biomTrack)
+  # trackList <- list(gtrack)
+
+  dt <- pd[, list(Chr, SNP, Q=adj.P.Val, -sign(logFC)*log10(adj.P.Val))]
+  dt[, V5 := ifelse(Q < 0.05, V4, NA)]
+  dtr1 <-  DataTrack(chr = chr, genome = "hg19", name="Appendix PD/C, SLP",
+                          start = dt$SNP, end = dt$SNP, 
+                          data = dt[, list(V4)],
+                          legend = TRUE)    
+
+  dt <- pd[, list(Chr, SNP, -sign(Healthy)*log10(HealthyQ))]
+  dtr2 <-  DataTrack(chr = chr, genome = "hg19", name="Appendix healthy aging, SLP",
+                          start = dt$SNP, end = dt$SNP, 
+                          data = dt[, list(V3)],
+                          legend = TRUE)    
+  dt <- pd[, list(Chr, SNP, -sign(PD)*log10(PDQ))]
+  dtr3 <-  DataTrack(chr = chr, genome = "hg19", name="Appendix PD aging, SLP",
+                          start = dt$SNP, end = dt$SNP, 
+                          data = dt[, list(V3)],
+                          legend = TRUE)
+
+  dt <- pd2[, list(Chr, SNP, -sign(logFC)*log10(adj.P.Val))]
+  dtr4 <-  DataTrack(chr = chr, genome = "hg19", name="PFC PD/C, SLP",
+                          start = dt$SNP, end = dt$SNP, 
+                          data = dt[, list(V3)],
+                          legend = TRUE)    
+  dt <- pd2[, list(Chr, SNP, -sign(Healthy)*log10(HealthyQ))]
+  dtr5 <-  DataTrack(chr = chr, genome = "hg19", name="PFC healthy aging, SLP",
+                          start = dt$SNP, end = dt$SNP, 
+                          data = dt[, list(V3)],
+                          legend = TRUE)    
+  dt <- pd[, list(Chr, SNP, -sign(PD)*log10(PDQ))]
+  dtr6 <-  DataTrack(chr = chr, genome = "hg19", name="PFC PD aging, SLP",
+                          start = dt$SNP, end = dt$SNP, 
+                          data = dt[, list(V3)],
+                          legend = TRUE)
+
+  plotTracks(
+      list(gtrack, biomTrack, dtr1, dtr2, dtr3, dtr4, dtr5, dtr6),
+      #groups = c("Control aging", "PD aging", "PD affected mean"),
+      from = from, to = to,
+      collapseTranscripts = "longest", transcriptAnnotation="symbol", 
+      ...)
+}
+```
+
+```{r, include=TRUE}
+
+# X11("", 7.2, 3)
+plotGeneTrace(gene="SNCA", qT=1, histart=90645250, hiend=90759447,
+      type = c("h"), 
+      baseline = c(-1.3, 1.3), col.baseline = "red", lwd.baseline = 0.25,
+      col = "black", lwd = 0.25, cex = 0.7)
+
+plotGeneTrace("LMX1B", qT = 0.2, histart=129376722, hiend=129463311,
+       type = c("h"), 
+      baseline = c(-1.3, 1.3), col.baseline = "red", lwd.baseline = 0.25,
+      col = "black", lwd = 0.25, cex = 0.7)
+
+plotGeneTrace(gene="MTOR", qT = 0.2, histart=11166588, hiend=11322608,
+        type = c("h"), 
+      baseline = c(-1.3, 1.3), col.baseline = "red", lwd.baseline = 0.25,
+      col = "black", lwd = 0.25, cex = 0.7)
+
+
+```
