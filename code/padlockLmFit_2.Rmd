@@ -213,8 +213,8 @@ fit <- cache(
             contrasts = params$model$contrasts,
             nsv       = nsv, 
             iteration = 0,
-            svaMethod = "SmartSVA")
-
+            svaMethod = "SmartSVA",
+            computeBetaCoeffs = TRUE)
 
 # stop cluster
 tryCatch({

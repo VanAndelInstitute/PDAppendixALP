@@ -39,6 +39,14 @@ n <- ofbx[adj.P.Val < 0.05, length(unique(Gene))]
 glue("- Number of genes affected {n}")
 ```
 
+```{r, include=TRUE, results='asis'}
+value1 <- ofbx[adj.P.Val < 0.05, mean(abs(BetaFC))] %>%
+  `*`(100) %>% round
+value2 <- ofbx[adj.P.Val < 0.05, sum(adj.P.Val < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
+  round(digits = 1)
+glue("- {value2} differentially methylated sites per affected ALP gene with {value1}% average methylation change")
+```
+
 
 Dominant direction of methylation
 
@@ -95,6 +103,17 @@ n <- pfcx[, sum(adj.P.Val < 0.05, na.rm=TRUE)]
 glue("- Number of significant loci {n}")
 n <- pfcx[adj.P.Val < 0.05, length(unique(Gene))]
 glue("- Number of genes affected {n}")
+```
+
+```{r, include=TRUE, results='asis'}
+value0 <- pfcx[adj.P.Val < 0.05 & Type != "CG", mean(abs(BetaFC))] %>%
+  `*`(100) %>% round
+value1 <- pfcx[adj.P.Val < 0.05 & Type == "CG", mean(abs(BetaFC))] %>%
+  `*`(100) %>% round
+
+value2 <- pfcx[adj.P.Val < 0.05, sum(adj.P.Val < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
+  round(digits = 1)
+glue("- {value2} differentially methylated sites per affected ALP gene with average methylation change {value1}% in CpG and {value0}% in CpH sites")
 ```
 
 
@@ -206,6 +225,14 @@ n <- pfc2x[, sum(adj.P.Val < 0.05, na.rm=TRUE)]
 glue("- Number of significant loci {n}")
 n <- pfc2x[adj.P.Val < 0.05, length(unique(Gene))]
 glue("- Number of genes affected {n}")
+```
+
+```{r, include=TRUE, results='asis'}
+value1 <- pfc2x[adj.P.Val < 0.05, mean(abs(BetaFC))] %>%
+  `*`(100) %>% round
+value2 <- pfc2x[adj.P.Val < 0.05, sum(adj.P.Val < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
+  round(digits = 1)
+glue("- {value2} differentially methylated sites per affected ALP gene with {value1}% average methylation change")
 ```
 
 

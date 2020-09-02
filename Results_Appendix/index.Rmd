@@ -47,6 +47,15 @@ n <- apx[adj.P.Val < 0.05, length(unique(Gene))]
 glue("- Number of genes affected {n}")
 ```
 
+```{r, include=TRUE, results='asis'}
+value1 <- apx[adj.P.Val < 0.05, mean(abs(BetaFC))] %>%
+  `*`(100) %>% round
+value2 <- apx[adj.P.Val < 0.05, sum(adj.P.Val < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
+  round(digits = 1)
+glue("- {value2} differentially methylated sites per affected ALP gene with {value1}% average methylation change")
+```
+
+
 Dominant direction of methylation:
 
 ```{r, include=TRUE}

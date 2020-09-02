@@ -238,6 +238,81 @@ parallel_mylmFit <- function(M,
   return(res)
 }
 
+# getLimmaFit <- function(M, 
+#                         md, 
+#                         formula, 
+#                         formula0, 
+#                         contrasts = NULL,
+#                         nsv, 
+#                         iteration, 
+#                         distributed=TRUE,
+#                         ...) 
+# {  
+#   message(glue("############# n.sv {nsv} Iteration {iteration} ##############"))
+#   if (iteration > 0)
+#     md <- permuteModelData(md, TRUE)
+#   m <- model.matrix(formula %>% as.formula, md)
+#   m0 <- model.matrix(formula0 %>% as.formula, md)
+#   coef <- which( !colnames(m) %in% colnames(m0))
+
+#   # Remove colons from design matrices
+#   if (any(grepl(":", colnames(m)))) {
+#     colnames(m) <- make.names(colnames(m))
+#     colnames(m0) <- make.names(colnames(m0))
+#   }
+
+#   if (nsv > 0) {
+#     svs <- computeSVs(M, m, m0, n.sv = nsv, ...)
+#     m <- cbind(m, svs)
+#     m0 <- cbind(m0, svs)
+#   }
+
+#   # Now run lmFit with eBayes
+#   if (distributed) {
+#     fit <- parallel_mylmFit(
+#       M = M,
+#       model = m, 
+#       chunkSize = ceiling(nrow(M)/params$workers),
+#       nNodes = params$workers,
+#       method = "robust",
+#       maxit = 100)
+#   } else {
+#     fit <- mylmFit(M, design = m, method = "robust", maxit = 100)
+#   }
+
+#   if (!is.null(contrasts)) {
+#     cont <- makeContrasts( 
+#       contrasts = contrasts,
+#       levels    = m
+#     )
+#     fit <- contrasts.fit(fit, cont) %>% eBayes 
+#     testF <-  
+#       topTable(fit, sort.by="none", number = Inf) %>% 
+#         setDT %>% 
+#         .[, list(P.Value, adj.P.Val)]
+#     n <- ncol(fit$coef)
+#     fit <- 
+#       foreach (i = 1:n, .combine = cbind) %do% {
+#         contrast <- colnames(fit$coef)[i]
+#         dt <- topTable(fit, coef = i, 
+#           sort.by = "none", number = Inf)
+#         dt <- data.table(C = dt$logFC, P = dt$P.Value)
+#         setnames(dt, 
+#           c("C", "P"), 
+#           paste0(c("C.", "P."), contrast))
+#         dt
+#       } %>% 
+#       data.table(ID = rownames(fit$coef), .) %>%
+#       cbind(., testF  )
+#   } else {
+#     fit <- fit %>% eBayes %>% 
+#       topTable(coef=coef, number=Inf, sort.by="none") %>% 
+#       data.table(ID = rownames(.), .)
+#   }
+#   return(fit)
+# }
+
+# Update function that returns fold change in beta value space
 getLimmaFit <- function(M, 
                         md, 
                         formula, 
@@ -246,6 +321,7 @@ getLimmaFit <- function(M,
                         nsv, 
                         iteration, 
                         distributed=TRUE,
+                        computeBetaCoeffs=FALSE,
                         ...) 
 {  
   message(glue("############# n.sv {nsv} Iteration {iteration} ##############"))
@@ -280,6 +356,24 @@ getLimmaFit <- function(M,
     fit <- mylmFit(M, design = m, method = "robust", maxit = 100)
   }
 
+
+  # Get fitted values and transform them into betas
+  if (computeBetaCoeffs == TRUE) {
+    fittedVals <- fitted(fit)
+    fittedVals <- 2^fittedVals / (2^fittedVals + 1)
+    if (distributed) {
+      betafit <- parallel_mylmFit(
+        M = fittedVals,
+        model = m, 
+        chunkSize = ceiling(nrow(M)/params$workers),
+        nNodes = params$workers,
+        method = "robust",
+        maxit = 100)
+    } else {
+      betafit <- mylmFit(fittedVals, design = m, method = "robust", maxit = 100)
+    }
+  }
+
   if (!is.null(contrasts)) {
     cont <- makeContrasts( 
       contrasts = contrasts,
@@ -300,6 +394,14 @@ getLimmaFit <- function(M,
         setnames(dt, 
           c("C", "P"), 
           paste0(c("C.", "P."), contrast))
+        if (computeBetaCoeffs == TRUE) {
+          betaCoeff <- 
+            betafit %>% contrasts.fit(cont) %>% eBayes %>% 
+            topTable(coef = i, sort.by = "none", number = Inf) %>%
+            .$logFC
+          dt[, B := betaCoeff]
+          setnames(dt, "B", paste0("B.", contrast))
+        }
         dt
       } %>% 
       data.table(ID = rownames(fit$coef), .) %>%
@@ -308,9 +410,14 @@ getLimmaFit <- function(M,
     fit <- fit %>% eBayes %>% 
       topTable(coef=coef, number=Inf, sort.by="none") %>% 
       data.table(ID = rownames(.), .)
+    if (computeBetaCoeffs == TRUE) { 
+      betaCoeff <- betafit %>% eBayes %>% topTable(coef=coef, number=Inf, sort.by="none") %>% .$logFC
+      fit[, BetaFC := betaCoeff]
+    }
   }
-  return(fit)
+  return (fit)
 }
+
 
 permutationAnalysis <- function(M, 
                                 md, 

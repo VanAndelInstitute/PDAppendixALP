@@ -72,6 +72,15 @@ r <- apad$key[Diagnosis == "Control", range(Age) %>% paste(collapse=":")]
 glue("- Age range of healthy controls {r}")
 ```
 
+```{r, include=TRUE, results='asis'}
+value1 <- apax[p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, mean(abs(B.DiagnosisControl.Age), na.rm=TRUE)] %>%
+  `*`(100) %>% round(digits=2)
+value2 <- apax[p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, sum(p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
+  round(digits = 1)
+glue("- {value2} differentially methylated sites per affected ALP gene with {value1}% average methylation change per year")
+```
+
+
 ```{r, include=TRUE}
 t <-
 	apax[, list(
@@ -381,6 +390,15 @@ glue("- Number of significant loci {n}")
 n <- pfcax[p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, length(unique(Gene))]
 glue("- Number of genes affected {n}")
 ```
+
+```{r, include=TRUE, results='asis'}
+value1 <- pfcax[p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, mean(abs(B.GroupCTRL.Age), na.rm=TRUE)] %>%
+  `*`(100) %>% round(digits=2)
+value2 <- pfcax[p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, sum(p.adjust(P.GroupCTRL.Age, "fdr") < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
+  round(digits = 1)
+glue("- {value2} differentially methylated sites per affected ALP gene with {value1}% average methylation change per year")
+```
+
 
 ```{r, include=TRUE}
 t <-
