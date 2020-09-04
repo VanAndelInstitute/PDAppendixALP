@@ -122,7 +122,7 @@ url <- "../Mice_DSS_Padlock/www/m6_Mice_DSS_Padlock.csv"
 stopifnot(file.exists(url))
 ```
 
-- **[Additional file 14](`r url`) DNA methylation changes in the cecal patch in response to gut inflammation: wild-type and A30P $\alpha$-syn mice chronically treated with DSS or water.**
+- **[Additional file 15](`r url`) DNA methylation changes in the cecal patch in response to gut inflammation: wild-type and A30P $\alpha$-syn mice chronically treated with DSS or water.**
 
 
 # Cecal patch
@@ -152,7 +152,7 @@ url <- "../Mice_CecalPatch_Padlock/www/m6_Mice_CecalPatch_Padlock.csv"
 stopifnot(file.exists(url))
 ```
 
-- **[Additional file 15](`r url`) DNA methylation changes in the cecal patch induced by rAAV vector-mediated $\alpha$-syn aggregation in mice.**
+- **[Additional file 16](`r url`) DNA methylation changes in the cecal patch induced by rAAV vector-mediated $\alpha$-syn aggregation in mice.**
 
 
 # Correlation of gene enrichments in cecal patch and DSS mice

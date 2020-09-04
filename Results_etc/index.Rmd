@@ -56,7 +56,7 @@ for (study in studies) {
 url <- "./www/sampleKey.xlsx"
 ```
 
-- **[Additional File 16](`r url`) Demographic and clinical information for human samples.**
+- **[Additional File 17](`r url`) Demographic and clinical information for human samples.**
 
 <!--  -->
 
@@ -74,7 +74,7 @@ url <- "./www/Supplementary Data_primers.xlsx"
 stopifnot(file.exists(url))
 ```
 
-- **[Additional File 17](`r url`) Padlock probe libraries and study primers.**
+- **[Additional File 18](`r url`) Padlock probe libraries and study primers.**
 
 
 
