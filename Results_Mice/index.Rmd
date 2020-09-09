@@ -16,6 +16,7 @@ runtime: shiny_prerendered
 
 ```{r, include=FALSE}
 require(broom)
+require(cowplot)
 require("ggrepel")
 source("../code/common.R")
 source("../code/pformat.R")
@@ -277,17 +278,59 @@ manhattanPlot <- function(fit) {
     theme_publication()
 }
 
+plotEnrichment <- function(fit) {
+  # Directional enrichment
+  getEnrichment <- function(dat) {
+    myt <- dat[, table(IsSignificant, sign(FC))]
+    pd <- myt %>% as.data.table
+    pd <- cbind(pd,
+                myt %>% fisher.test %>% broom::tidy() %>% .[, c("estimate", "p.value")])
+    pd <- pd %>% setnames(c("Significant", "Sign", "N", "OR", "P")) %>%
+      .[, Significant := factor(Significant, levels = c(FALSE, TRUE), labels = c("p > 0.05", "p < 0.05"))] %>%
+      .[, Sign := factor(Sign, levels = c(-1, 1), labels = c("Hypo-\nmethylation", "Hyper-\nmethylation"))] %>%
+      .[order(Significant)] %>%
+      .[, F := N / sum(N), Significant]
+    pd
+  }
+
+  pd <-
+    fit[, list(IsSignificant = Q < 0.05, FC)] %>%
+    getEnrichment()
+  pd[, OR := format(OR, digits=3)]
+  pd[, P := format(P, digits=3, scientific=TRUE)]
+  pd[, P := gsub("e", "~x~10^", P)]
+  pd[, Label := paste0("~\"OR=\"~", OR, "~\", p=\"~", P)]
+  ggplot(pd, aes(Sign, F,
+               fill  = paste(Significant, Sign),
+               color = paste(Significant, Sign))) +
+  geom_bar(stat = "identity", position = position_dodge(width=0.5)) +
+  geom_text(
+    data = pd[Sign == "Hypo-\nmethylation" & Significant == "p < 0.05"],
+    x = 1.5, y = 0.9, aes(label = Label),
+    size = 2.2, color = "black", parse = TRUE) +
+  ylab("Fraction, %") +
+  # scale_fill_manual(values = c("blue", "green", "grey", "grey")) +
+  scale_fill_manual("", values=c("#33a02c", "#1f78b4", "white", "white")) +
+  scale_color_manual("", values=c("#33a02c", "#1f78b4", "grey60", "grey60")) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 2), limits = c(0, 1)) +
+  guides(fill = FALSE, color = FALSE) +
+  ggtitle("DSS effect in:") +
+  theme_publication() +
+  theme(axis.title.x = element_blank())
+}
+
 ```
 
 
-```{r, include=TRUE, fig.height=3, fig.cap="**Figure S12. Manhattan plot demonstrating differential methylation in wild-type mice that experienced DSS-mediated gut inflammation. There were 397 genes in the ALP exhibiting differential methylation in wild-type mice that experienced DSS colitis, relative to wild-type mice that did not experience DSS colitis (1,104 sites at q < 0.05, robust linear regression). ALP genes implicated in both our study and PD risk by GWAS [23] (mapped to corresponding mouse genes) are labeled. SLP refers signed log p-value, with sign corresponding to the direction of DNA methylation change (hypermethylation, green or hypomethylation, blue).**"}
+```{r, include=TRUE, fig.height=7.2, fig.cap="**Figure S12. Manhattan plot demonstrating differential methylation in wild-type mice that experienced DSS-mediated gut inflammation. There were 397 genes in the ALP exhibiting differential methylation in wild-type mice that experienced DSS colitis, relative to wild-type mice that did not experience DSS colitis (1,104 sites at q < 0.05, robust linear regression). ALP genes implicated in both our study and PD risk by GWAS [23] (mapped to corresponding mouse genes) are labeled. SLP refers signed log p-value, with sign corresponding to the direction of DNA methylation change (hypermethylation, green or hypomethylation, blue).**"}
+
 # Manhattan plot of DSSvsSal@wt
 conA <- "GTwt_DSS - GTwt_Water"
 fit <- dssx[, list(ID, Chr, SNP, Gene, 
           P = get(glue("P.{conA}")), FC = get(glue("C.{conA}")))]
 fit[, Q := p.adjust(P, "fdr")]
 pA <- manhattanPlot(fit)
-pA
+pAE <- plotEnrichment(fit)
 
 
 # Manhattan plot of DSSvsSal@mt
@@ -296,7 +339,7 @@ fit <- dssx[, list(ID, Chr, SNP, Gene,
           P = get(glue("P.{conA}")), FC = get(glue("C.{conA}")))]
 fit[, Q := p.adjust(P, "fdr")]
 pB <- manhattanPlot(fit)
-pB
+pBE <- plotEnrichment(fit)
 
 
 # Manhattan plot of MTvsWT@water
@@ -305,12 +348,30 @@ fit <- dssx[, list(ID, Chr, SNP, Gene,
           P = get(glue("P.{conA}")), FC = get(glue("C.{conA}")))]
 fit[, Q := p.adjust(P, "fdr")]
 pC <- manhattanPlot(fit)
-pC
-```
+pCE <- plotEnrichment(fit)
 
 
-```{r, include=TRUE, fig.cap="**Figure S14. Differential methylation of the ALP in the cecal patch of A30P α-syn mice.**"}
-knitr::include_graphics("../Mice_DSS_Padlock/index_files/figure-html/unnamed-chunk-31-4.png")
+suppressWarnings(
+  ggdraw() + 
+    draw_plot(pA + ylab("Wild type,\nDSS-Water, SLP"), 
+      x = 0, y = 0.7, width = 0.7, height = 0.3) + 
+    draw_plot(pAE + ggtitle("Wild type,\nDSS-Water"), 
+      x = 0.7, y = 0.7, width = 0.3, height = 0.3) + 
+    draw_plot(pB + ylab("A30P,\nDSS-Water, SLP"), 
+      x = 0, y = 0.4, width = 0.7, height = 0.3) + 
+    draw_plot(pBE + ggtitle("A30P,\nDSS-Water"), 
+      x = 0.7, y = 0.4, width = 0.3, height = 0.3) + 
+    draw_plot(pC + ylab("Water\nA30P - Wild type, SLP"), 
+      x = 0, y = 0.1, width = 0.7, height = 0.3) + 
+    draw_plot(pCE + ggtitle("Water\nA30P - Wild type"), 
+      x = 0.7, y = 0.1, width = 0.3, height = 0.3) +
+    draw_plot_label(
+      label = letters[1:3],
+      size = 10,
+      x = c(0, 0,    0),
+      y = c(1, 0.7, 0.4)))
+
+
 ```
 
 ```{r}
@@ -339,7 +400,7 @@ glue("- {value2} differentially methylated sites per affected ALP gene with {val
 ```
 
 
-```{r, include=TRUE, fig.cap="**Figure S15. Differential methylation of the ALP in the cecal patch of mice with $\alpha$-syn aggregation. **"}
+```{r, include=TRUE, fig.cap="**Figure S14. Differential methylation of the ALP in the cecal patch of mice with a-syn aggregation. **"}
 knitr::include_graphics("../Mice_CecalPatch_Padlock/index_files/figure-html/unnamed-chunk-31-1.png")
 ```
 
