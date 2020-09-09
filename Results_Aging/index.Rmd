@@ -1038,10 +1038,10 @@ plotGeneTrace <- function(gene="SNCA", qT = 0.05, stacking = "squish", histart=9
 }
 ```
 
-```{r, include=TRUE, fig.height=3}
+```{r, include=TRUE, fig.height=3, fig.cap="**Figure S10. PD related and aging changes at individual cytosines surrounding PD implicated genes in PD appendix and prefrontal cortex neurons. (a) SNCA. (b) LMX1B. (c) MTOR. Bar heights correspond to signed log-transformed FDR q value. Red dashed lines indicate FDR q < 0.05 threshold. Transparent red rectangles indicate the area corresponding to the gene transcript.**"}
 
 # X11("", 7.2, 3)
-plotGeneTrace(gene="SNCA", qT=1, histart=90645250, hiend=90759447)
-plotGeneTrace("LMX1B", qT = 0.2, histart=129376722, hiend=129463311)
-plotGeneTrace(gene="MTOR", qT = 0.2, histart=11166588, hiend=11322608)
+suppressWarnings(plotGeneTrace(gene="SNCA", qT=1, histart=90645250, hiend=90759447))
+suppressWarnings(plotGeneTrace("LMX1B", qT = 0.2, histart=129376722, hiend=129463311))
+suppressWarnings(plotGeneTrace(gene="MTOR", qT = 0.2, histart=11166588, hiend=11322608))
 ```
