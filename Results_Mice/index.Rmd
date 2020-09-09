@@ -696,7 +696,6 @@ E <-
   .[, list(HGNC_hg19, `WT_DSS - WT_Water` = Direction)]
 
 dt <- merge(A, B) %>% merge(C) %>% merge(D) %>% merge(E)
-
 fwrite(dt, "Direction_Genes_Apendix_Mouse.csv")
 ```
 
@@ -780,3 +779,18 @@ res[p.value < 0.05 & estimate > 1, list(estimate, p.value, Pathway, Apx, `a-syn`
 kable %>% 
 kable_styling(bootstrap_options="hover")
 ```
+
+
+```{r}
+dt[, `Selective autophagy` := HGNC_hg19 %in% pathways_human[[1]]$genes]
+dt[, `Macroautophagy` := HGNC_hg19 %in% pathways_human[[2]]$genes]
+dt[, `Lysosomes` := HGNC_hg19 %in% pathways_human[[3]]$genes]
+dt[, `Chaperone-mediated autophagy` := HGNC_hg19 %in% pathways_human[[4]]$genes]
+dt[, `Autophagy` := HGNC_hg19 %in% pathways_human[[5]]$genes]
+
+fwrite(dt, "www/Direction_Genes_Apendix_Mouse.csv")
+url <- "./www/Direction_Genes_Apendix_Mouse.csv"
+stopifnot(file.exists(url))
+```
+
+- **[Additional file 17](`r url`) Dominant direction of methylation in each ALP gene in appendix and mouse cecal patch.**
