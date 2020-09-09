@@ -299,7 +299,7 @@ fit <- dssx[, list(ID, Chr, SNP, Gene,
           P = get(glue("P.{conA}")), FC = get(glue("C.{conA}")))]
 fit[, Q := p.adjust(P, "fdr")]
 pB <- manhattanPlot(fit)
-
+pB
 ```
 
 
