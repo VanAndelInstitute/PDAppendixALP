@@ -16,13 +16,20 @@ runtime: shiny_prerendered
 
 ```{r, include=FALSE}
 require(broom)
+require("ggrepel")
 source("../code/common.R")
 source("../code/pformat.R")
 
-gmap <- fread("../etc/padlock_genes_human2mouse.csv") %>%
-  select(V1, V2)
-gmap[1, ] %>% as.character %>% setnames(gmap, .)
+# GWAS genes
+geneList <- c("GBA","NUCKS1","SLC41A1","SIPA1L2","TMEM163","CCNT2","STK39","CHMP2B","MCCC1","TMEM175","DGKQ","FAM200B","CD38","FAM47E","SNCA","HLA-DRB6","HLA-DQA1","KLHL7","NUPL2","GPNMB","MICU3","BAG3","DLG2","MIR4697","LRRK2","OGFOD2","GCH1","TMEM229B","VPS13C","ZNF646","KAT8","ARHGAP27","CRHR1","SPPL2C","MAPT","STH","KANSL1","SYT4","LSM7","DDRGK1","ITPKB","IL1R2","SCN3A","SATB1","NCKIPSD","CDC71","ALAS1","TLR9","DNAH1","BAP1","PHF7","NISCH","STAB1","ITIH3","ITIH4","ANK2","CAMK2D","ELOVL7","ZNF184","CTSB","SORBS3","PDLIM2","C8orf58","BIN3","SH3GL2","FAM171A1","GALC","COQ7","TOX3","ATP6V0A1","PSMC3IP","TUBG2")
+
+# Convert GWAS genes from human into mouse
+gmap <- fread("../etc/padlock_genes_human2mouse.csv") %>% 
+  .[, list(V1, V2)]
+setnames(gmap, gmap[1,] %>% as.character)
 gmap <- gmap[-1,]
+geneList <- gmap[HGNC_hg19 %in% geneList, MGI_mm10]
+
 ```
 
 ```{r}
@@ -111,9 +118,192 @@ knitr::kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
 
+```{r}
+theme_publication <- function(font = 7) {
+  theme(
+    text = element_text(family = "Helvetica", size = font, color = "black"),
+    plot.title = element_text(size = font, color = "black"),
+
+    panel.background = element_rect(fill = "transparent", colour = NA),
+    panel.border = element_blank(),
+    plot.background = element_rect(fill = "transparent", colour = NA),
+
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    axis.line = element_line(color = "black"),
+    axis.text = element_text(size = font, color = "black"), 
+    axis.ticks = element_line(size = 0.3, color = "black"),
+    axis.title = element_text(size = font, color = "black"),
+
+    # strip.background = element_rect(color = "white", fill = "white"),
+    strip.text.x = element_text(size = font, color = "black"),
+    strip.text.y = element_text(size = font, color = "black"),
+
+    legend.background = element_rect(
+      fill = alpha("white", 0),
+      color = alpha("white", 0)
+    ),
+    legend.key = element_rect(color = NA, fill = NA),
+    legend.key.size = unit(0.2, "cm"),    
+    legend.text = element_text(size = font)
+  )
+}
 
 
-```{r, include=TRUE, fig.cap="**Figure S12. Differential methylation of the ALP in the cecal patch of A30P α-syn mice.**"}
+
+foo <- function(snps, pvals) {
+  snps[ which.min(pvals)]
+}
+
+foo2 <- function(N, SNP) {
+  i <- which.max(N)
+  return(SNP[i])
+}
+
+manhattanPlot <- function(fit) {
+  getColorGroup <- function(Chr, Q, S) {
+    Chr <- as.numeric(Chr)
+    Q <- as.numeric(Q)
+    S <- as.numeric(S)
+    df <- data.frame(Chr, Q, S)
+    apply(df, 1, function(I) {
+      I <- as.list(I)
+      if (I$Chr %% 2 == 0) {
+        # Darker colors
+        if (I$Q > 0.05) {
+          "dark grey"
+        } else {
+          ifelse(I$S > 0, "dark positive", "dark negative")
+        }
+      } else {
+        # Brighter colors
+        if (I$Q > 0.05) {
+          "light grey"
+        } else {
+          ifelse(I$S > 0, "light positive", "light negative")
+        }
+      }
+    }) %>% unlist
+  }
+
+  fit[ log10(P) < -20, P := 1e-20]
+  effects <- 
+    fit[ Gene %in% geneList & Q < 0.05, ] %>% 
+      # count how many times each gene is negative of positive
+      .[, list(.N, SNP = foo(SNP, P), P = min(P)), by=list(Gene, sign(FC))] %>%
+      # select the sign which has more representation
+      .[, list(SNP=foo2(N, SNP)), Gene] %>%
+      .[, Label := TRUE] %>% 
+      merge(fit, ., by=c("Gene", "SNP"), all.x=TRUE)
+  effects[is.na(Label), Label := FALSE]
+  # effects[Label == TRUE]
+
+  # Format the input data
+  effects <- effects %>%
+    # Fix chromosome name 
+    .[, Chr := gsub("chr", "", Chr) ] %>% 
+    # Give chromosomes numbers
+    .[, ChrNo :=  Chr %>% gsub("X", "23", .) %>% gsub("Y", "24", .) %>% as.numeric]  %>%
+    # Make sure SNP is numeric
+    .[, SNP := as.numeric(SNP)] %>%
+    setkey(ChrNo, SNP)
+
+  # Prepare plot data
+  effects <- effects[!is.na(Q)]
+  # Points that will be painted grey
+  greyIds <- effects[Q > 0.05, ] %>% .[ID %in% sample(ID, .N*0.05, prob=-log10(P)), ID]
+  # Points that will be shown as significant
+  coloredIds <- effects[Q <= 0.05, ID]
+  pd <- effects %>% 
+    # Compute chromosome size
+    .[, list(ChrLen = max(SNP)), ChrNo] %>%
+    # Calculate cumulative position of each chromosome
+    .[, list(ChrNo, Tot = cumsum(ChrLen) - ChrLen)] %>%
+    # Add this info to the initial dataset
+    merge(effects, ., by=c("ChrNo")) %>%
+    # Subsample 
+    .[ ID %in% c(coloredIds, greyIds)] %>%      
+    # Sort by ChrNo and position 
+    .[ order(ChrNo, SNP), ] %>%
+    # Compute position for each SNP on x axis
+    .[, Loc := SNP + Tot] %>%
+    # Get color group
+    .[, Color := getColorGroup(ChrNo, !(Q < 0.05), FC) %>% as.factor ] %>%
+    setkey(Loc)
+
+
+  # Prepare the x axis
+  pdAxis <- pd %>% 
+    .[, list(center = ( max(Loc) + min(Loc) ) / 2 ), by=list(Chr, ChrNo)] %>%
+    # omit some chromosomes
+    .[, Chr := ifelse(ChrNo %in% seq(15, 21, 2), "", Chr)]
+
+
+  # Prepare FDR thresholds
+  pdThresholds <- pd[Q < 0.05, 
+     list(
+       Y = sign(max(FC)) * (-1) * log10(max(P)), 
+       Label = "q < 0.05"),
+     by = sign(FC)] %>%
+    .[, X := pd[, min(Loc)]]
+
+  # Prepare the core plot
+  ggplot(pd, aes(x=Loc, y=-1 * sign(FC) * log10(P))) +
+    # Show grey points
+    geom_point(data = pd[!(Q <= 0.05)], aes(color=Color, shape=Color), 
+      alpha=1, size=0.5) +
+    # Show significant points
+    geom_point(data = pd[Q <= 0.05], aes(color=Color, shape=Color), 
+      alpha=1, size=1) + 
+    # custom X axis:
+    scale_x_continuous( label = pdAxis$Chr, breaks= pdAxis$center) +
+    scale_y_continuous(limits = c(-20, 16)) +
+    scale_color_manual( values = c("grey60", "#1f78b4", "#33a02c", 
+                                   "grey80",   "#a6cee3","#b2df8a")) +
+    scale_shape_manual("", values = c(1, 16, 16, 1, 16, 16)) + 
+    guides(color = FALSE, shape = FALSE) +
+    # Add labels
+    geom_point(data=pd[Label == TRUE], color="orange", size=1.3) +
+    geom_text_repel(data=pd[Label == TRUE & FC > 0], aes(label=Gene), 
+      size=2.7, ylim=c(10, NA), segment.size = 0.25, force = 10) +
+    geom_text_repel(data=pd[Label == TRUE & FC < 0], aes(label=Gene), 
+      size=2.7, ylim=c(NA, -15), segment.size = 0.25, force = 10) +
+    # geom_label_repel(data=pd[Label == TRUE], aes(label=Gene), 
+    #   size=2.2, force=10, segment.size = 0.25) +    
+    # Label the axes
+    xlab("Chromosome") + 
+    ylab("Signed log p") + 
+    theme_publication()
+}
+
+```
+
+```{r, include=TRUE, fig.cap="**Figure S12. Manhattan plot demonstrating differential methylation in wild-type mice that experienced DSS-mediated gut inflammation. There were 397 genes in the ALP exhibiting differential methylation in wild-type mice that experienced DSS colitis, relative to wild-type mice that did not experience DSS colitis (1,104 sites at q < 0.05, robust linear regression). ALP genes implicated in both our study and PD risk by GWAS [23] (mapped to corresponding mouse genes) are labeled. SLP refers signed log p-value, with sign corresponding to the direction of DNA methylation change (hypermethylation, green or hypomethylation, blue).**"}
+# Manhattan plot of DSSvsSal@wt
+conA <- "GTwt_DSS - GTwt_Water"
+# Prepare the fit
+fit <- dssx[, list(ID, Chr, SNP, Gene, 
+          P = get(glue("P.{conA}")), FC = get(glue("C.{conA}")))]
+fit[, Q := p.adjust(P, "fdr")]
+pA <- manhattanPlot(fit)
+pA
+```
+
+```{r, include=TRUE, fig.cap="**Figure S13. Manhattan plot demonstrating differential methylation in the A30P α-syn overexpression model that experienced DSS-induced gut inflammation. There were 408 genes in the ALP exhibiting differential methylation in A30P α-syn mice exposed to DSS colitis, relative to A30P α-syn mice that did not experience DSS colitis (1,378 sites at q < 0.05, robust linear regression). ALP genes implicated in both our study and PD risk by GWAS [23] (mapped to corresponding mouse genes) are labeled. SLP refers signed log p-value, with sign corresponding to the direction of DNA methylation change (hypermethylation, green or hypomethylation, blue).**"}
+# Manhattan plot of DSSvsSal@mt
+conA <- "GTtg_DSS - GTtg_Water"
+
+# Prepare the fit
+fit <- dssx[, list(ID, Chr, SNP, Gene, 
+          P = get(glue("P.{conA}")), FC = get(glue("C.{conA}")))]
+fit[, Q := p.adjust(P, "fdr")]
+pB <- manhattanPlot(fit)
+
+```
+
+
+```{r, include=TRUE, fig.cap="**Figure S14. Differential methylation of the ALP in the cecal patch of A30P α-syn mice.**"}
 knitr::include_graphics("../Mice_DSS_Padlock/index_files/figure-html/unnamed-chunk-31-4.png")
 ```
 
@@ -426,4 +616,165 @@ p1 <- ggplot(pd, aes(Pathway, log(estimate), color = p.value < 0.05, shape = Tes
 
 ```{r, include=TRUE, fig.cap="**Figure S15. ALP pathway changes in the PD appendix compared to the mouse studies.**"}
 p1
+```
+
+Overlap of findings in appendix, A30P and DSS mice
+
+
+```{r}
+classifyGene <- function(logfc, p, q, qth = 0.05, retNAforNoDMC = FALSE) {
+  nhyper <- sum(q < qth & logfc > 0, na.rm=TRUE)
+  nhypo <- sum(q < qth & logfc < 0, na.rm=TRUE)
+  if (nhyper > nhypo) {
+    return("Hyper-")
+  } else if (nhyper < nhypo) {
+    return("Hypo-")
+  } else {
+    meanfc <- weighted.mean(logfc, -log(p), na.rm=TRUE)
+    hasdmc <- sum(q < qth, na.rm=TRUE) > 0
+    if (hasdmc <= 0 & retNAforNoDMC == TRUE)
+      return("NS")
+    if (sign(meanfc) > 0) 
+      return("Hyper-")
+    else 
+      return("Hypo-")
+  }
+}
+
+
+A <- 
+  apx[, 
+    list(
+      Nsig = sum(adj.P.Val < 0.05, na.rm=TRUE), 
+      Direction = classifyGene(logFC, P.Value, adj.P.Val, 0.05, retNAforNoDMC=TRUE)), 
+    Gene] %>%
+  .[, HGNC_hg19 := Gene] %>%
+  setkey(HGNC_hg19) %>%
+  .[!duplicated(HGNC_hg19)] %>%
+  .[, list(HGNC_hg19, `Appendix` = Direction)]
+
+B <- 
+  cpx[, 
+    list(
+      Nsig = sum(adj.P.Val < 0.05, na.rm=TRUE), 
+      Direction = classifyGene(logFC, P.Value, adj.P.Val, 0.05, retNAforNoDMC=TRUE)
+    ), 
+    Gene
+  ] %>%
+  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
+  setkey(HGNC_hg19) %>%
+  .[!duplicated(HGNC_hg19)] %>%
+  .[, list(HGNC_hg19, `rAAV a-syn` = Direction)]
+
+C <- 
+  dssx[, 
+    list(Gene, logFC = `C.GTtg_Water - GTwt_Water`, P.Value = `P.GTtg_Water - GTwt_Water`)] %>%
+    .[, adj.P.Val := p.adjust(P.Value, "fdr")] %>%
+    .[, list(Nsig = sum(adj.P.Val < 0.05, na.rm=TRUE), Direction = classifyGene(logFC, P.Value, adj.P.Val, 0.05, retNAforNoDMC=TRUE)), Gene] %>%
+  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
+  setkey(HGNC_hg19) %>%
+  .[!duplicated(HGNC_hg19)] %>%
+  .[, list(HGNC_hg19, `A30P_Water - WT_Water` = Direction)]
+
+
+D <- 
+  dssx[, list(Gene, logFC = `C.GTtg_DSS - GTtg_Water`, P.Value = `P.GTtg_DSS - GTtg_Water`)] %>%
+    .[, adj.P.Val := p.adjust(P.Value, "fdr")] %>%
+    .[, list(Nsig = sum(adj.P.Val < 0.05, na.rm=TRUE), Direction = classifyGene(logFC, P.Value, adj.P.Val, 0.05, retNAforNoDMC=TRUE)), Gene] %>%
+  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
+  setkey(HGNC_hg19) %>%
+  .[!duplicated(HGNC_hg19)] %>%
+  .[, list(HGNC_hg19, `A30P_DSS - A30P_Water` = Direction)]
+
+E <- 
+  dssx[, list(Gene, logFC = `C.GTwt_DSS - GTwt_Water`, P.Value = `P.GTwt_DSS - GTwt_Water`)] %>%
+    .[, adj.P.Val := p.adjust(P.Value, "fdr")] %>%
+    .[, list(Nsig = sum(adj.P.Val < 0.05, na.rm=TRUE), Direction = classifyGene(logFC, P.Value, adj.P.Val, 0.05, retNAforNoDMC=TRUE)), Gene] %>%
+  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
+  setkey(HGNC_hg19) %>%
+  .[!duplicated(HGNC_hg19)] %>%
+  .[, list(HGNC_hg19, `WT_DSS - WT_Water` = Direction)]
+
+dt <- merge(A, B) %>% merge(C) %>% merge(D) %>% merge(E)
+```
+
+Hyper-modified genes
+
+```{r, include=TRUE}
+dtHyper <- 
+  dt %>%
+    .[, list(
+            Appendix = Appendix == "Hyper-",
+            `a-syn` = `rAAV a-syn` == "Hyper-" | `A30P_Water - WT_Water` == "Hyper-",
+            `DSS` = `A30P_DSS - A30P_Water` == "Hyper-" | `WT_DSS - WT_Water` == "Hyper-"
+        ), 
+        HGNC_hg19]
+
+dtHyper %>% 
+  select(-HGNC_hg19) %>% 
+  vennCounts
+
+res <- 
+  foreach( dss = 0:1, .combine = rbind ) %:%
+  foreach( asyn = 0:1, .combine = rbind ) %:%
+  foreach( app = 0:1, .combine = rbind ) %:%
+  foreach( i = 1:length(pathways_human), .combine = rbind) %do% {
+    tryCatch({
+      dtHyper[, table(HGNC_hg19 %in% pathways_human[[i]]$genes, Appendix == app & `a-syn` == asyn & DSS == dss)] %>% 
+      fisher.test %>%
+      broom::tidy() %>% 
+      mutate(Pathway = pathways_human[[i]]$name) %>%
+      mutate(
+        Apx = app, 
+        `a-syn` = asyn, 
+        DSS = dss) %>%
+      setDT
+    }, error = function(e) {
+      return(NULL)
+    })
+  }
+res[p.value < 0.05 & estimate > 1, list(estimate, p.value, Pathway, Apx, `a-syn`, DSS)] %>%
+kable %>% 
+kable_styling(bootstrap_options="hover")
+```
+
+
+Hypo-modified genes
+
+```{r, include=TRUE}
+dtHypo <- 
+  dt %>%
+    .[, list(
+            Appendix = Appendix == "Hypo-",
+            `a-syn` = `rAAV a-syn` == "Hypo-" | `A30P_Water - WT_Water` == "Hypo-",
+            `DSS` = `A30P_DSS - A30P_Water` == "Hypo-" | `WT_DSS - WT_Water` == "Hypo-"
+        ), 
+        HGNC_hg19]
+
+dtHypo %>% 
+  select(-HGNC_hg19) %>% 
+  vennCounts
+
+res <- 
+  foreach( dss = 0:1, .combine = rbind ) %:%
+  foreach( asyn = 0:1, .combine = rbind ) %:%
+  foreach( app = 0:1, .combine = rbind ) %:%
+  foreach( i = 1:length(pathways_human), .combine = rbind) %do% {
+    tryCatch({
+      dtHypo[, table(HGNC_hg19 %in% pathways_human[[i]]$genes, Appendix == app & `a-syn` == asyn & DSS == dss)] %>% 
+      fisher.test %>%
+      broom::tidy() %>% 
+      mutate(Pathway = pathways_human[[i]]$name) %>%
+      mutate(
+        Apx = app, 
+        `a-syn` = asyn, 
+        DSS = dss) %>%
+      setDT
+    }, error = function(e) {
+      return(NULL)
+    })
+  }
+res[p.value < 0.05 & estimate > 1, list(estimate, p.value, Pathway, Apx, `a-syn`, DSS)] %>%
+kable %>% 
+kable_styling(bootstrap_options="hover")
 ```
