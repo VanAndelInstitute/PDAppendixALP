@@ -618,7 +618,7 @@ p1 <- ggplot(pd, aes(Pathway, log(estimate), color = p.value < 0.05, shape = Tes
 p1
 ```
 
-Overlap of findings in appendix, A30P and DSS mice
+Overlap of findings in appendix, A30P and DSS mice at gene level and their enrichment with ALP pathways. Only pathways positively enriched with p < 0.05 are shown.
 
 
 ```{r}
