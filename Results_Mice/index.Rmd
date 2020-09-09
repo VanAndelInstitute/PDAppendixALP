@@ -279,7 +279,7 @@ manhattanPlot <- function(fit) {
 
 ```
 
-```{r, include=TRUE, fig.cap="**Figure S12. Manhattan plot demonstrating differential methylation in wild-type mice that experienced DSS-mediated gut inflammation. There were 397 genes in the ALP exhibiting differential methylation in wild-type mice that experienced DSS colitis, relative to wild-type mice that did not experience DSS colitis (1,104 sites at q < 0.05, robust linear regression). ALP genes implicated in both our study and PD risk by GWAS [23] (mapped to corresponding mouse genes) are labeled. SLP refers signed log p-value, with sign corresponding to the direction of DNA methylation change (hypermethylation, green or hypomethylation, blue).**"}
+```{r, include=TRUE, fig.height=3, fig.cap="**Figure S12. Manhattan plot demonstrating differential methylation in wild-type mice that experienced DSS-mediated gut inflammation. There were 397 genes in the ALP exhibiting differential methylation in wild-type mice that experienced DSS colitis, relative to wild-type mice that did not experience DSS colitis (1,104 sites at q < 0.05, robust linear regression). ALP genes implicated in both our study and PD risk by GWAS [23] (mapped to corresponding mouse genes) are labeled. SLP refers signed log p-value, with sign corresponding to the direction of DNA methylation change (hypermethylation, green or hypomethylation, blue).**"}
 # Manhattan plot of DSSvsSal@wt
 conA <- "GTwt_DSS - GTwt_Water"
 # Prepare the fit
@@ -290,7 +290,7 @@ pA <- manhattanPlot(fit)
 pA
 ```
 
-```{r, include=TRUE, fig.cap="**Figure S13. Manhattan plot demonstrating differential methylation in the A30P α-syn overexpression model that experienced DSS-induced gut inflammation. There were 408 genes in the ALP exhibiting differential methylation in A30P α-syn mice exposed to DSS colitis, relative to A30P α-syn mice that did not experience DSS colitis (1,378 sites at q < 0.05, robust linear regression). ALP genes implicated in both our study and PD risk by GWAS [23] (mapped to corresponding mouse genes) are labeled. SLP refers signed log p-value, with sign corresponding to the direction of DNA methylation change (hypermethylation, green or hypomethylation, blue).**"}
+```{r, include=TRUE, fig.height=3, fig.cap="**Figure S13. Manhattan plot demonstrating differential methylation in the A30P α-syn overexpression model that experienced DSS-induced gut inflammation. There were 408 genes in the ALP exhibiting differential methylation in A30P α-syn mice exposed to DSS colitis, relative to A30P α-syn mice that did not experience DSS colitis (1,378 sites at q < 0.05, robust linear regression). ALP genes implicated in both our study and PD risk by GWAS [23] (mapped to corresponding mouse genes) are labeled. SLP refers signed log p-value, with sign corresponding to the direction of DNA methylation change (hypermethylation, green or hypomethylation, blue).**"}
 # Manhattan plot of DSSvsSal@mt
 conA <- "GTtg_DSS - GTtg_Water"
 
@@ -333,7 +333,7 @@ glue("- {value2} differentially methylated sites per affected ALP gene with {val
 ```
 
 
-```{r, include=TRUE, fig.cap="**Figure S14. Differential methylation of the ALP in the cecal patch of mice with $\alpha$-syn aggregation. **"}
+```{r, include=TRUE, fig.cap="**Figure S15. Differential methylation of the ALP in the cecal patch of mice with $\alpha$-syn aggregation. **"}
 knitr::include_graphics("../Mice_CecalPatch_Padlock/index_files/figure-html/unnamed-chunk-31-1.png")
 ```
 
@@ -614,7 +614,7 @@ p1 <- ggplot(pd, aes(Pathway, log(estimate), color = p.value < 0.05, shape = Tes
 
 ```
 
-```{r, include=TRUE, fig.cap="**Figure S15. ALP pathway changes in the PD appendix compared to the mouse studies.**"}
+```{r, include=TRUE, fig.cap="**Figure S16. ALP pathway changes in the PD appendix compared to the mouse studies.**"}
 p1
 ```
 
@@ -696,6 +696,8 @@ E <-
   .[, list(HGNC_hg19, `WT_DSS - WT_Water` = Direction)]
 
 dt <- merge(A, B) %>% merge(C) %>% merge(D) %>% merge(E)
+
+fwrite(dt, "Direction_Genes_Apendix_Mouse.csv")
 ```
 
 Hyper-modified genes
