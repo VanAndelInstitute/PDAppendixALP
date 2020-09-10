@@ -400,7 +400,7 @@ glue("- {value2} differentially methylated sites per affected ALP gene with {val
 ```
 
 
-```{r, include=TRUE, fig.cap="**Figure S15. Differential methylation of the ALP in the cecal patch of mice with a-syn aggregation. **"}
+```{r, include=TRUE, fig.cap="**Figure S14. Differential methylation of the ALP in the cecal patch of mice with a-syn aggregation. **"}
 knitr::include_graphics("../Mice_CecalPatch_Padlock/index_files/figure-html/unnamed-chunk-31-1.png")
 ```
 
@@ -681,7 +681,7 @@ p1 <- ggplot(pd, aes(Pathway, log(estimate), color = p.value < 0.05, shape = Tes
 
 ```
 
-```{r, include=TRUE, fig.cap="**Figure S16. ALP pathway changes in the PD appendix compared to the mouse studies.**"}
+```{r, include=TRUE, fig.cap="**Figure S15. ALP pathway changes in the PD appendix compared to the mouse studies.**"}
 p1
 ```
 

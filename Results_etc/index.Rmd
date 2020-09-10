@@ -16,11 +16,18 @@ runtime: shiny_prerendered
 
 ```{r, include=FALSE}
 source("../code/common.R")
-require("cowplot")
-require("xlsx")
+pacman::p_load("cowplot")
+pacman::p_load("pheatmap")
+pacman::p_load("ggrepel")
+pacman::p_load("xlsx")
+
+# Data primers
+if (!dir.exists("www")) 
+	dir.create('www')
+
 ```
 
-# Heatmap of all results
+# Summary of all results at ALP gene level
 
 ```{r}
 pfcr <- "../Brain_PFCRep_Padlock_withGLU/www/m6_Brain_PFCRep_Padlock_withGLU.csv" %>% Sys.glob %>% fread
@@ -115,30 +122,113 @@ computeORs <- function(dt, cores = parallel::detectCores()) {
 
 ```{r}
 # Compute the enrichment and sign of each gene and in each condition
-# Case/control analyses
-epfcr <- readRDS("../Results_Brain/epfcr.RDS")
-epfc <- readRDS("../Results_Brain/epfc.RDS")
-eofb <- readRDS("../Results_Brain/eofb.RDS")
-eapp <- readRDS("../Results_Brain/eapp.RDS")
+
+# PFC replicate dataset
+epfcr <- 
+	readRDS("../Results_Brain/epfcr.RDS") %>%
+	merge( 
+		pfc[, classifyGene(logFC, P.Value, adj.P.Val, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `PFC Replicte, OR` = OR, `PFC Replicate, p` = P)]
+
+# PFC
+epfc <- 
+	readRDS("../Results_Brain/epfc.RDS") %>%
+	merge( 
+		pfcr[, classifyGene(logFC, P.Value, adj.P.Val, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `PFC, OR` = OR, `PFC, p` = P)]
+
+# OFB
+eofb <- 
+	readRDS("../Results_Brain/eofb.RDS") %>%
+	merge( 
+		ofb[, classifyGene(logFC, P.Value, adj.P.Val, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `OFB, OR` = OR, `OFB, p` = P)]
+
+# Appendix
+eapp <- 
+	readRDS("../Results_Brain/eapp.RDS") %>%
+	merge( 
+		app[, classifyGene(logFC, P.Value, adj.P.Val, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `Appendix, OR` = OR, `Appendix, p` = P)]
 
 
 # Appendix aging
-eapp_ACtrl <- cache(foo=computeORs, fname="eapp_aging_ctrl.RDS",
-                    dt = aapp[, list(Gene, Significant = fdr(P.DiagnosisControl.Age) < 0.05)])
-eapp_APD <- cache(foo=computeORs, fname="eapp_aging_pd.RDS",
-                    dt = aapp[, list(Gene, Significant = fdr(P.DiagnosisPD.LBD.Age) < 0.05)])
+x <- 
+  aapp[, list(Gene, logFC = C.DiagnosisControl.Age, P = P.DiagnosisControl.Age, Q = fdr(P.DiagnosisControl.Age))]
+eapp_ACtrl <- 
+	cache(foo=computeORs, fname="eapp_aging_ctrl.RDS",
+          dt = aapp[, list(Gene, Significant = fdr(P.DiagnosisControl.Age) < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `Aging Control Appendix, OR` = OR, `Aging Control Appendix, p` = P)]
+
+
+x <- 
+  aapp[, list(Gene, logFC = C.DiagnosisPD.LBD.Age, P = P.DiagnosisPD.LBD.Age, Q = fdr(P.DiagnosisPD.LBD.Age))]
+eapp_APD <-
+	cache(foo=computeORs, fname="eapp_aging_pd.RDS",
+          dt = aapp[, list(Gene, Significant = fdr(P.DiagnosisPD.LBD.Age) < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `Aging PD Appendix, OR` = OR, `Aging PD Appendix, p` = P)]
 
 # PFC aging
-epfc_ACtrl <- cache(foo=computeORs, fname="epfc_aging_ctrl.RDS",
-                    dt = apfc[, list(Gene, Significant = fdr(P.GroupCTRL.Age) < 0.05)])
-epfc_APD <- cache(foo=computeORs, fname="epfc_aging_pdl.RDS",
-                    dt = apfc[, list(Gene, Significant = fdr(P.GroupPD.Age) < 0.05)])
+x <- 
+  apfc[, list(Gene, logFC = C.GroupCTRL.Age, P = P.GroupCTRL.Age, Q = fdr(P.GroupCTRL.Age))]
+epfc_ACtrl <- 
+	cache(foo=computeORs, fname="epfc_aging_ctrl.RDS",
+          dt = apfc[, list(Gene, Significant = fdr(P.GroupCTRL.Age) < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `Aging Control PFC, OR` = OR, `Aging Control PFC, p` = P)]
+
+x <- 
+  apfc[, list(Gene, logFC = C.GroupPD.Age, P = P.GroupPD.Age, Q = fdr(P.GroupPD.Age))]
+epfc_APD <- 
+	cache(foo=computeORs, fname="epfc_aging_pdl.RDS",
+        dt = apfc[, list(Gene, Significant = fdr(P.GroupPD.Age) < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `Aging PD PFC, OR` = OR, `Aging PD PFC, p` = P)]
 
 # OFB aging
+x <- 
+  aofb[, list(Gene, logFC = C.GroupCTRL.Age, P = P.GroupCTRL.Age, Q = fdr(P.GroupCTRL.Age))]
 eofb_ACtrl <- cache(foo=computeORs, fname="eofb_aging_ctrl.RDS",
-                    dt = aofb[, list(Gene, Significant = fdr(P.GroupCTRL.Age) < 0.05)])
-eofb_APD <- cache(foo=computeORs, fname="eofb_aging_pdl.RDS",
-                    dt = aofb[, list(Gene, Significant = fdr(P.GroupPD.Age) < 0.05)])
+                    dt = aofb[, list(Gene, Significant = fdr(P.GroupCTRL.Age) < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `Aging Control OFB, OR` = OR, `Aging Control OFB, p` = P)]
+
+
+x <- 
+  aofb[, list(Gene, logFC = C.GroupPD.Age, P = P.GroupPD.Age, Q = fdr(P.GroupPD.Age))]
+eofb_APD <- 
+	cache(foo=computeORs, fname="eofb_aging_pdl.RDS",
+        dt = aofb[, list(Gene, Significant = fdr(P.GroupPD.Age) < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `Aging PD OFB, OR` = OR, `Aging PD OFB, p` = P)]
 
 
 # Mice
@@ -149,505 +239,97 @@ gmap <- gmap[-1,]
 
 
 x <- mdss[, list(Gene, logFC=`C.GTwt_DSS - GTwt_Water`, P=`P.GTwt_DSS - GTwt_Water`)] %>%
-  .[, Q := fdr(P)] %>% 
-  .[, list(Gene, Significant = Q < 0.05)]
+  .[, Q := fdr(P)]
 edss_wtdss_wtwater <- 
   cache(foo=computeORs, fname="edss_wtdss_wtwater.RDS",
-        dt = x)
+        dt = x[, list(Gene, Significant = Q < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `WT_DSS-WT_Water, OR` = OR, `WT_DSS-WT_Water, p` = P)]
+
 
 x <- mdss[, list(Gene, logFC=`C.GTtg_DSS - GTtg_Water`, P=`P.GTtg_DSS - GTtg_Water`)] %>%
-  .[, Q := fdr(P)] %>% 
-  .[, list(Gene, Significant = Q < 0.05)]
+  .[, Q := fdr(P)]
 edss_tgdss_tgwater <- 
   cache(foo=computeORs, fname="edss_tgdss_tgwater.RDS",
-        dt = x)
-
+        dt = x[, list(Gene, Significant = Q < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `A30P_DSS-A30P_Water, OR` = OR, `A30P_DSS-A30P_Water, p` = P)]
 
 x <- mdss[, list(Gene, logFC=`C.GTtg_DSS - GTwt_Water`, P=`P.GTtg_DSS - GTwt_Water`)] %>%
-  .[, Q := fdr(P)] %>% 
-  .[, list(Gene, Significant = Q < 0.05)]
+  .[, Q := fdr(P)]
 edss_tgdss_wtwater <- 
   cache(foo=computeORs, fname="edss_tgdss_wtwater.RDS",
-        dt = x)
+        dt = x[, list(Gene, Significant = Q < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `A30P_DSS - WT_Water, OR` = OR, `A30P_DSS - WT_Water, p` = P)]
+
 
 x <- mdss[, list(Gene, logFC=`C.GTtg_Water - GTwt_Water`, P=`P.GTtg_Water - GTwt_Water`)] %>%
-  .[, Q := fdr(P)] %>% 
-  .[, list(Gene, Significant = Q < 0.05)]
+  .[, Q := fdr(P)]
 edss_tgwater_wtwater <- 
   cache(foo=computeORs, fname="edss_tgwater_wtwater.RDS",
-        dt = x)
+        dt = x[, list(Gene, Significant = Q < 0.05)]) %>%
+	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `A30P_Water - WT_Water, OR` = OR, `A30P_Water - WT_Water, p` = P)]
 
-x <- mcp[, list(Gene, logFC, P=P.Value, Q=adj.P.Val)] %>%
-  .[, list(Gene, Significant = Q < 0.05)]
+x <- mcp[, list(Gene, logFC, P=P.Value, Q=adj.P.Val)]
 emcp <- 
   cache(foo=computeORs, fname="emcp.RDS",
-        dt = x)
+        dt = x[, list(Gene, Significant = Q < 0.05)]) %>%
+ 	merge( 
+		x[, classifyGene(logFC, P, Q, qth=0.05), Gene],
+		by = "Gene") %>%
+	.[, OR := ifelse(V1 == "Hyper-", OR, -OR)] %>%
+	.[, list(Gene, `rAAV a-syn, OR` = OR, `rAAV a-syn, p` = P)]
 
+# Combine human datasets into one
+
+human <- 
+	merge(epfcr, epfc, by = "Gene", all = TRUE) %>%
+	merge(eofb, by = "Gene", all = TRUE) %>%
+	merge(eapp, by = "Gene", all = TRUE) %>%
+	merge(eapp_ACtrl, by = "Gene", all = TRUE) %>%
+	merge(eapp_APD, by = "Gene", all = TRUE) %>%
+	merge(epfc_ACtrl, by = "Gene", all = TRUE) %>%
+	merge(epfc_APD, by = "Gene", all = TRUE) %>%
+	merge(eofb_ACtrl, by = "Gene", all = TRUE) %>%
+	merge(eofb_APD, by = "Gene", all = TRUE)
+
+# Combine mouse datasets
+mouse <-
+	merge(edss_wtdss_wtwater, edss_tgdss_tgwater, by = "Gene", all = TRUE) %>%
+	merge(edss_tgdss_wtwater, by = "Gene", all = TRUE) %>%
+	merge(edss_tgwater_wtwater, by = "Gene", all = TRUE) %>%
+	merge(emcp, by = "Gene", all = TRUE) %>%
+	merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
+	setnames("Gene", "MGI_mm10")
+
+# Now merge human and mouse
+dt <- merge(human, mouse,
+	by.x = "Gene", by.y = "HGNC_hg19", all=TRUE) 
+
+# Mark GWAS genes
+dt[, IsGWASGene := Gene %in% geneList]
+
+
+fwrite(dt, "www/geneEnrichment.csv")
+url <- "./www/geneEnrichment.csv"
 ```
 
-```{r}
-pacman::p_load(pheatmap)
-col_pfcr <- 
-  epfcr %>%
-  merge(pfcr[, list(Dir = classifyGene(logFC, P.Value, adj.P.Val)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, PFCR = -1 * Sign * log10(P))]
-col_pfc <- 
-  epfc %>%
-  merge(pfc[, list(Dir = classifyGene(logFC, P.Value, adj.P.Val)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, PFC = -1 * Sign * log10(P))]
-col_ofb <- 
-  eofb %>%
-  merge(ofb[, list(Dir = classifyGene(logFC, P.Value, adj.P.Val)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, OFB = -1 * Sign * log10(P))]
-col_apx <- 
-  eapp %>%
-  merge(app[, list(Dir = classifyGene(logFC, P.Value, adj.P.Val)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, APX = -1 * Sign * log10(P))]
+- **[Additional File 16](`r url`) Enrichment of genes with significantly differentially modified cytosines and the dominant direction of modification.**
 
-col_apx_rna <-
-  apprna[, list(Gene = SYMBOL, APX_RNA = -1 * sign(logFC) * log10(P.Value))]
-
-# Apx aging
-x <- 
-  aapp[, list(Gene, logFC = C.DiagnosisControl.Age, P = P.DiagnosisControl.Age, Q = fdr(P.DiagnosisControl.Age))]
-col_apxaging_ctrl <-
-  eapp_ACtrl %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, APXA_Ctrl = -1 * Sign * log10(P))]
-
-x <- 
-  aapp[, list(Gene, logFC = C.DiagnosisPD.LBD.Age, P = P.DiagnosisPD.LBD.Age, Q = fdr(P.DiagnosisPD.LBD.Age))]
-col_apxaging_pd <-
-  eapp_APD %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, APXA_PD = -1 * Sign * log10(P))]
-
-# PFC aging
-x <- 
-  apfc[, list(Gene, logFC = C.GroupCTRL.Age, P = P.GroupCTRL.Age, Q = fdr(P.GroupCTRL.Age))]
-col_pfcaging_ctrl <-
-  epfc_ACtrl %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, PFCA_Ctrl = -1 * Sign * log10(P))]
-
-x <- 
-  apfc[, list(Gene, logFC = C.GroupPD.Age, P = P.GroupPD.Age, Q = fdr(P.GroupPD.Age))]
-col_pfcaging_pd <-
-  epfc_APD %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, PFCA_PD = -1 * Sign * log10(P))]
-
-# OFB aging
-x <- 
-  aofb[, list(Gene, logFC = C.GroupCTRL.Age, P = P.GroupCTRL.Age, Q = fdr(P.GroupCTRL.Age))]
-col_ofbaging_ctrl <-
-  eofb_ACtrl %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, OFBA_Ctrl = -1 * Sign * log10(P))]
-
-x <- 
-  aofb[, list(Gene, logFC = C.GroupPD.Age, P = P.GroupPD.Age, Q = fdr(P.GroupPD.Age))]
-col_ofbaging_pd <-
-  eofb_APD %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, OFBA_PD = -1 * Sign * log10(P))]
-
-
-# Mice
-x <- 
-  mcp[, list(Gene, logFC, P = P.Value, Q = adj.P.Val)]
-col_mcp <-
-  emcp %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, list(Gene = HGNC_hg19, Dir, P)] %>%
-  .[, list(Dir = Dir[which.min(P)], P = P[which.min(P)]), Gene] %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, `Cecal patch` = -1 * Sign * log10(P))]
-
-x <- 
-  mdss[, list(Gene, logFC = `C.GTtg_DSS - GTwt_Water`, P = `P.GTtg_DSS - GTwt_Water`)] %>%
-  .[, Q := fdr(P)]
-col_dss_tgdss_wtwater <-
-  edss_tgdss_wtwater %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, list(Gene = HGNC_hg19, Dir, P)] %>%
-  .[, list(Dir = Dir[which.min(P)], P = P[which.min(P)]), Gene] %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, `A30P_DSS - WT_Water` = -1 * Sign * log10(P))]
-
-x <- 
-  mdss[, list(Gene, logFC = `C.GTwt_DSS - GTwt_Water`, P = `P.GTwt_DSS - GTwt_Water`)] %>%
-  .[, Q := fdr(P)]
-col_dss_wtdss_wtwater <-
-  edss_wtdss_wtwater %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, list(Gene = HGNC_hg19, Dir, P)] %>%
-  .[, list(Dir = Dir[which.min(P)], P = P[which.min(P)]), Gene] %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, `WT_DSS - WT_Water` = -1 * Sign * log10(P))]
-
-x <- 
-  mdss[, list(Gene, logFC = `C.GTtg_DSS - GTtg_Water`, P = `P.GTtg_DSS - GTtg_Water`)] %>%
-  .[, Q := fdr(P)]
-col_dss_tgdss_tgwater <-
-  edss_tgdss_tgwater %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, list(Gene = HGNC_hg19, Dir, P)] %>%
-  .[, list(Dir = Dir[which.min(P)], P = P[which.min(P)]), Gene] %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, `A30P_DSS - A30P_Water` = -1 * Sign * log10(P))]
-
-x <- 
-  mdss[, list(Gene, logFC = `C.GTtg_Water - GTwt_Water`, P = `P.GTtg_Water - GTwt_Water`)] %>%
-  .[, Q := fdr(P)]
-col_dss_tgwater_wtwater <-
-  edss_tgwater_wtwater %>%
-  merge(x[, list(Dir = classifyGene(logFC, P, Q)), Gene],
-        by = "Gene") %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, list(Gene = HGNC_hg19, Dir, P)] %>%
-  .[, list(Dir = Dir[which.min(P)], P = P[which.min(P)]), Gene] %>%
-  .[, Sign := ifelse(Dir == "Hyper-", 1, -1)] %>%
-  .[, list(Gene, `A30P_Water - WT_Water` = -1 * Sign * log10(P))]
-
-
-pd <- 
-  merge(col_pfcr, col_pfc, by = "Gene", all=TRUE) %>%
-  merge(col_ofb, by = "Gene", all=TRUE) %>%
-  merge(col_apx, by = "Gene", all=TRUE) %>%
-  merge(col_apx_rna, by = "Gene", all.x = TRUE) %>%
-  merge(col_apxaging_ctrl, by = "Gene", all=TRUE) %>%
-  merge(col_apxaging_pd, by = "Gene", all=TRUE) %>%
-  merge(col_pfcaging_ctrl, by = "Gene", all=TRUE) %>%
-  merge(col_pfcaging_pd, by = "Gene", all=TRUE) %>%
-  merge(col_ofbaging_ctrl, by = "Gene", all=TRUE) %>%
-  merge(col_ofbaging_pd, by = "Gene", all=TRUE) %>%
-  merge(col_mcp, by = "Gene", all=TRUE) %>%
-  merge(col_dss_tgdss_tgwater, by = "Gene", all=TRUE) %>%
-  merge(col_dss_tgdss_wtwater, by = "Gene", all=TRUE) %>%
-  merge(col_dss_tgwater_wtwater, by = "Gene", all=TRUE) %>%
-  merge(col_dss_wtdss_wtwater, by = "Gene", all=TRUE)
-pd <- 
-  pd[, list(
-          Gene,
-          `Appendix PD/Control` = APX,
-          `Appendix PD/Control RNA-seq` = APX_RNA,
-          `PFC PD/Control` = PFCR,
-          `PFC II PD/Control` = PFC,
-          `OFB PD/Control` = OFB,
-          `Appendix Control Aging` = APXA_Ctrl,
-          `Appendix PD Aging` = APXA_PD,
-          `PFC Control Aging` = PFCA_Ctrl,
-          `PFC PD Aging` = PFCA_PD,
-          `OFB Control Aging` = OFBA_Ctrl,
-          `OFB PD Aging` = OFBA_PD,
-          `Cecal patch`,
-          `A30P_DSS - A30P_Water`,
-          `A30P_DSS - WT_Water`,
-          `A30P_Water - WT_Water`,
-          `WT_DSS - WT_Water`
-  )]
-dim(pd)
-
-# Transform NAs into 0s
-pd[is.na(pd)] <- 0
-
-# Convert PD to a matrix
-pd <- as.matrix(pd, rownames="Gene")
-
-# Remove columns that are entirely made of 0
-keep <- apply(pd, 1, function(x) max(abs(x))) %>% `>`(-log10(0.05))
-pd <- pd[keep, ]
-dim(pd)
-
-pacman::p_load(RColorBrewer)
-pheatmap(pd, cluster_cols = FALSE,
-         color = rev(brewer.pal(n = 11, name = "RdBu")),
-         breaks = seq(-12, 12, length.out = 12),
-         gaps_col = c(2, 5, 11),
-         fontsize = 5,
-         angle_col = 45,
-         border_color = "grey80"
-         )
-
-
-
-
-```
-
-
-A three-color heatmap with direction and has-dmc mark.
-
-```{r}
-
-col_pfcr <- 
-  pfcr[, 
-       list(
-         PFCR = classifyGene(logFC, P.Value, adj.P.Val, retNAforNoDMC = TRUE)), 
-       Gene]
-
-col_pfc <- 
-  pfc[, list(PFC = classifyGene(logFC, P.Value, adj.P.Val, retNAforNoDMC = TRUE)), Gene]
-
-col_ofb <- 
-  ofb[, list(OFB = classifyGene(logFC, P.Value, adj.P.Val, retNAforNoDMC = TRUE)), Gene]
-
-
-col_apx <- 
-  app[, list(APX = classifyGene(logFC, P.Value, adj.P.Val, retNAforNoDMC = TRUE)), Gene]
-
-col_apx_rna <-
-  apprna[, list(Gene = SYMBOL, Sign = adj.P.Val < 0.05, Dir = ifelse(sign(logFC) > 0, "Hyper-", "Hypo-"))] %>%
-  .[, list(Gene, APX_RNA = ifelse(Sign==TRUE, Dir, "NS"))]
-
-# Apx aging
-x <- 
-  aapp[, list(Gene, logFC = C.DiagnosisControl.Age, P = P.DiagnosisControl.Age, Q = fdr(P.DiagnosisControl.Age))]
-col_apxaging_ctrl <-
-  x[, list(APXA_Ctrl = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene]
-
-x <- 
-  aapp[, list(Gene, logFC = C.DiagnosisPD.LBD.Age, P = P.DiagnosisPD.LBD.Age, Q = fdr(P.DiagnosisPD.LBD.Age))]
-col_apxaging_pd <-
-  x[, list(APXA_PD = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene]
-
-# PFC aging
-x <- 
-  apfc[, list(Gene, logFC = C.GroupCTRL.Age, P = P.GroupCTRL.Age, Q = fdr(P.GroupCTRL.Age))]
-col_pfcaging_ctrl <-
-  x[, list(PFCA_Ctrl = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene]
-
-x <- 
-  apfc[, list(Gene, logFC = C.GroupPD.Age, P = P.GroupPD.Age, Q = fdr(P.GroupPD.Age))]
-col_pfcaging_pd <-
-  x[, list(PFCA_PD = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene]
-
-# OFB aging
-x <- 
-  aofb[, list(Gene, logFC = C.GroupCTRL.Age, P = P.GroupCTRL.Age, Q = fdr(P.GroupCTRL.Age))]
-col_ofbaging_ctrl <-
-  x[, list(OFBA_Ctrl = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene]
-
-x <- 
-  aofb[, list(Gene, logFC = C.GroupPD.Age, P = P.GroupPD.Age, Q = fdr(P.GroupPD.Age))]
-col_ofbaging_pd <-
-  x[, list(OFBA_PD = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene]
-
-
-# Mice
-x <- 
-  mcp[, list(Gene, logFC, P = P.Value, Q = adj.P.Val)]
-col_mcp <-
-  x[, list(`Cecal patch` = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene] %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, 3:2, with=FALSE] %>%
-  setnames("HGNC_hg19", "Gene") %>%
-  .[!duplicated(Gene)]
-
-x <- 
-  mdss[, list(Gene, logFC = `C.GTtg_DSS - GTwt_Water`, P = `P.GTtg_DSS - GTwt_Water`)] %>%
-  .[, Q := fdr(P)]
-col_dss_tgdss_wtwater <-
-  x[, list(`A30P_DSS - WT_Water` = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene] %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, 3:2, with=FALSE] %>%
-  setnames("HGNC_hg19", "Gene") %>%
-  .[!duplicated(Gene)]
-
-x <- 
-  mdss[, list(Gene, logFC = `C.GTwt_DSS - GTwt_Water`, P = `P.GTwt_DSS - GTwt_Water`)] %>%
-  .[, Q := fdr(P)]
-col_dss_wtdss_wtwater <-
-  x[, list(`WT_DSS - WT_Water` = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene] %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, 3:2, with=FALSE] %>%
-  setnames("HGNC_hg19", "Gene") %>%
-  .[!duplicated(Gene)]
-
-x <- 
-  mdss[, list(Gene, logFC = `C.GTtg_DSS - GTtg_Water`, P = `P.GTtg_DSS - GTtg_Water`)] %>%
-  .[, Q := fdr(P)]
-col_dss_tgdss_tgwater <-
-  x[, list(`A30P_DSS - A30P_Water` = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene] %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, 3:2, with=FALSE] %>%
-  setnames("HGNC_hg19", "Gene") %>%
-  .[!duplicated(Gene)]
-
-x <- 
-  mdss[, list(Gene, logFC = `C.GTtg_Water - GTwt_Water`, P = `P.GTtg_Water - GTwt_Water`)] %>%
-  .[, Q := fdr(P)]
-col_dss_tgwater_wtwater <-
-  x[, list(`A30P_Water - WT_Water` = classifyGene(logFC, P, Q, retNAforNoDMC = TRUE)), Gene] %>%
-  merge(gmap, by.x = "Gene", by.y = "MGI_mm10") %>%
-  .[, 3:2, with=FALSE] %>%
-  setnames("HGNC_hg19", "Gene") %>%
-  .[!duplicated(Gene)]
-
-
-pd <- 
-  merge(col_pfcr, col_pfc, by = "Gene", all=TRUE) %>%
-  merge(col_ofb, by = "Gene", all=TRUE) %>%
-  merge(col_apx, by = "Gene", all=TRUE) %>%
-  merge(col_apx_rna, by = "Gene", all.x = TRUE) %>%
-  merge(col_apxaging_ctrl, by = "Gene", all=TRUE) %>%
-  merge(col_apxaging_pd, by = "Gene", all=TRUE) %>%
-  merge(col_pfcaging_ctrl, by = "Gene", all=TRUE) %>%
-  merge(col_pfcaging_pd, by = "Gene", all=TRUE) %>%
-  merge(col_ofbaging_ctrl, by = "Gene", all=TRUE) %>%
-  merge(col_ofbaging_pd, by = "Gene", all=TRUE) %>%
-  merge(col_mcp, by = "Gene", all=TRUE) %>%
-  merge(col_dss_tgdss_tgwater, by = "Gene", all=TRUE) %>%
-  merge(col_dss_tgdss_wtwater, by = "Gene", all=TRUE) %>%
-  merge(col_dss_tgwater_wtwater, by = "Gene", all=TRUE) %>%
-  merge(col_dss_wtdss_wtwater, by = "Gene", all=TRUE)
-
-
-pd <- 
-  pd[, list(
-          Gene,
-          `Appendix PD/Control` = APX,
-          #`Appendix PD/Control RNA-seq` = APX_RNA,
-          `PFC PD/Control` = PFCR,
-          `PFC II PD/Control` = PFC,
-          `OFB PD/Control` = OFB,
-          `Appendix Control Aging` = APXA_Ctrl,
-          `Appendix PD Aging` = APXA_PD,
-          `PFC Control Aging` = PFCA_Ctrl,
-          `PFC PD Aging` = PFCA_PD,
-          `OFB Control Aging` = OFBA_Ctrl,
-          `OFB PD Aging` = OFBA_PD,
-          `Cecal patch`,
-          `A30P_DSS - A30P_Water`,
-          `A30P_DSS - WT_Water`,
-          `WT_DSS - WT_Water`,
-          `A30P_Water - WT_Water`
-  )]
-
-
-# Convert PD to a matrix
-pd <- as.matrix(pd, rownames="Gene")
-# Transform NAs into 0s
-pd[is.na(pd)] <- "NS"
-```
-
-
-Plot for human tissues only
-
-```{r}
-mypd <- 
-  pd[, c(
-      "Appendix PD/Control",
-      "PFC PD/Control",
-      "PFC II PD/Control",
-      "OFB PD/Control",
-      "Appendix Control Aging",
-      "Appendix PD Aging",
-      "PFC Control Aging",
-      "PFC PD Aging",
-      "OFB Control Aging",
-      "OFB PD Aging")]
-# Remove columns that are entirely made of NS
-keep <- apply(mypd, 1, function(x) any(x != "NS"))
-mypd <- mypd[keep, ]
-mypd[mypd == "NS"] <- 0
-mypd[mypd == "Hypo-"] <- -1
-mypd[mypd == "Hyper-"] <- 1
-n <- rownames(mypd)
-mypd <- apply(mypd, 2, as.numeric)
-rownames(mypd) <- n
-rownames(mypd)[ !rownames(mypd) %in% geneList] <- ""
-rownames(mypd)[ rownames(mypd) == "BAG3"] <- "              BAG3"
-
-
-require(ggrepel)
-pheatmap(mypd,
-         cluster_cols = FALSE,
-         cluster_rows = TRUE,
-         color = c("#3E78AF", "grey90", "#599D3E"),
-         gaps_col = c(4),
-         fontsize = 5,
-         angle_col = 45,
-         border_color = NA
-         ) 
-
-```
-
-Plot for human appendix and mice
-
-```{r}
-mypd <- 
-  pd[, c(
-      "Appendix PD/Control",
-      "Cecal patch",
-      "A30P_DSS - A30P_Water",
-      "A30P_DSS - WT_Water",
-      "WT_DSS - WT_Water",
-      "A30P_Water - WT_Water"
-)]
-# Remove columns that are entirely made of NS
-keep <- apply(mypd, 1, function(x) any(x != "NS"))
-mypd <- mypd[keep, ]
-mypd[mypd == "NS"] <- 0
-mypd[mypd == "Hypo-"] <- -1
-mypd[mypd == "Hyper-"] <- 1
-n <- rownames(mypd)
-mypd <- apply(mypd, 2, as.numeric)
-rownames(mypd) <- n
-rownames(mypd)[ !rownames(mypd) %in% geneList] <- ""
-rownames(mypd)[ rownames(mypd) == "BAG3"] <- "              BAG3"
-
-
-require(ggrepel)
-pheatmap(mypd,
-         cluster_cols = FALSE,
-         cluster_rows = TRUE,
-         color = c("#3E78AF", "grey90", "#599D3E"),
-         fontsize = 5,
-         angle_col = 45,
-         border_color = NA
-         ) 
-
-```
-
-Export everything into a csv file
-
-```{r}
-pd %>% 
-  data.table(keep.rownames = TRUE) %>% 
-  setnames("rn", "Gene") %>% 
-  fwrite(
-    quote = FALSE,
-    file="allResultsHeatmap.csv")
-```
 
 
 # Other additional files
@@ -693,10 +375,6 @@ url <- "./www/sampleKey.xlsx"
 <!--  -->
 
 ```{r}
-# Data primers
-if (!dir.exists("www")) 
-	dir.create('www')
-
 file.copy("../etc/Supplementary Data_primers.xlsx", "www/")
 ```
 
