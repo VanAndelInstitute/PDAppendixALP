@@ -429,16 +429,17 @@ pF <-
   pd %>%  
   ggplot(aes(x=X, xend=X, y=Healthy, yend=PD)) + 
   geom_segment(size = 0.25, color = "grey85") +
-  geom_segment(
-      data = function(x) x[Gene %in% geneList],
-      size = 0.5, color = "orange") +   
    geom_point(
     aes(x = X, y = Healthy, color = "Control aging"), size = 0.25) +
   geom_point(
     aes(x = X, y = PD, color = "PD aging"), size = 0.25) +
+  geom_segment(
+      data = function(x) x[Gene %in% geneList],
+      size = 0.5, color = "orange") +   
    geom_text_repel(
       data = function(x) x[Gene %in% geneList],
       nudge_y = 0.05, segment.size = 0.25,
+      ylim = c(0.07, Inf), force=10,
       size = 2.2,
       aes(label = Gene)
       ) + 
@@ -502,15 +503,16 @@ pG <-
   pd %>%  
   ggplot(aes(x=X, xend=X, y=Healthy, yend=PD)) + 
   geom_segment(size = 0.25, color = "grey85") +
-  geom_segment(
-      data = function(x) x[Gene %in% geneList],
-      size = 0.5, color = "orange") +   
    geom_point(
     aes(x = X, y = Healthy), color = '#0080FF', size = 0.25) +
   geom_point(
     aes(x = X, y = PD), color = '#FF00FF', size = 0.25) +
+  geom_segment(
+      data = function(x) x[Gene %in% geneList],
+      size = 0.5, color = "orange") +   
   geom_text_repel(
       data = function(x) x[Gene %in% geneList],
+      ylim = c(0.05, Inf), force=10,
       nudge_y = 0.01, segment.size = 0.25,
       size = 2.2,
       aes(label = Gene)
@@ -527,10 +529,13 @@ pG <-
       axis.text.x = element_blank()
     ) 
 
-# ggdraw() +
-#   draw_plot(
-#   pG,
-#   x = 0.47, y = .2, width = 0.53, height = 0.4)
+ggdraw() +
+  draw_plot(
+    pF,
+    x = 0.29, y = .4, width = 0.71, height = 0.19) + 
+  draw_plot(
+    pG,
+    x = 0.29, y = .21, width = 0.71, height = 0.20)
 ```
 
 
