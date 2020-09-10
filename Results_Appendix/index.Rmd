@@ -47,6 +47,16 @@ n <- apx[adj.P.Val < 0.05, length(unique(Gene))]
 glue("- Number of genes affected {n}")
 ```
 
+```{r}
+# DEBUGF
+apx[adj.P.Val < 0.05, list(NPos = sum(logFC > 0), NNeg = sum(logFC<0)), Gene] %>%
+.[NPos > NNeg]
+
+x <- fread("../Results_etc/www/geneEnrichment.csv")
+x[ !duplicated(Gene), table(sign(`Appendix, OR`))] 
+
+```
+
 ```{r, include=TRUE, results='asis'}
 value1 <- apx[adj.P.Val < 0.05, mean(abs(BetaFC))] %>%
   `*`(100) %>% round
@@ -225,9 +235,37 @@ knitr::kable() %>%
 kable_styling(bootstrap_options = c("hover"))
 ```
 
-
 ```{r}
-url <- "../Appendix_PDvsControls_RNAseq/www/r1_Appendix_PDvsControls_RNAseq.csv"
+# Mark the genes that are also differentially methylated
+classifyGene <- function(logfc, p, q, qth = 0.05, retNAforNoDMC = FALSE) {
+  nhyper <- sum(q < qth & logfc > 0, na.rm=TRUE)
+  nhypo <- sum(q < qth & logfc < 0, na.rm=TRUE)
+  if (nhyper > nhypo) {
+    return("Hyper-")
+  } else if (nhyper < nhypo) {
+    return("Hypo-")
+  } else {
+    meanfc <- weighted.mean(logfc, -log(p), na.rm=TRUE)
+    hasdmc <- sum(q < qth, na.rm=TRUE) > 0
+    if (hasdmc <= 0 & retNAforNoDMC == TRUE)
+      return("NS")
+    if (sign(meanfc) > 0) 
+      return("Hyper-")
+    else 
+      return("Hypo-")
+  }
+}
+
+dir.create("www", recursive = TRUE, showWarnings = FALSE)
+url <- "./www/Appendix_PDvsControls_RNAseq.csv"
+merge(
+	rna, 
+	apx[, 
+		list(`Methylation direction`=classifyGene(logFC, P.Value, adj.P.Val, retNAforNoDMC=TRUE)), 
+		Gene],
+	by.x = "SYMBOL", by.y = "Gene", all.x = TRUE
+	) %>%
+fwrite(url)
 stopifnot(file.exists(url))
 ```
 
