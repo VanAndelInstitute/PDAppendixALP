@@ -71,6 +71,21 @@ value1 <- dssx[p.adjust(get(colP), "fdr") < 0.05, mean(abs(get(colB)), na.rm=TRU
 value2 <- dssx[p.adjust(get(colP), "fdr") < 0.05, sum(p.adjust(get(colP), "fdr") < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
   round(digits = 1)
 glue("- {value2} differentially methylated sites per affected ALP gene with {value1}% average methylation change")
+
+
+# In water treatment
+colP <- "P.GTtg_Water - GTwt_Water"
+colB <- "B.GTtg_Water - GTwt_Water"
+n <- dssx[, sum(p.adjust(get(colP), "fdr") < 0.05, na.rm=TRUE)]
+glue("- Number of significant loci in A30P/Water {n}")
+n <- dssx[p.adjust(get(colP), "fdr") < 0.05, length(unique(Gene))]
+glue("- Number of affected genes in A30P/Water {n}")
+value1 <- dssx[p.adjust(get(colP), "fdr") < 0.05, mean(abs(get(colB)), na.rm=TRUE)] %>%
+  `*`(100) %>% round(digits=2)
+value2 <- dssx[p.adjust(get(colP), "fdr") < 0.05, sum(p.adjust(get(colP), "fdr") < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
+  round(digits = 1)
+glue("- {value2} differentially methylated sites per affected ALP gene with {value1}% average methylation change")
+
 ```
 
 Dominant direction of methylation in WT

@@ -315,3 +315,57 @@ kable_styling(bootstrap_options="hover")
 # - **[Additional file NNN](`r url`) Overlap of ALP gene proteomic and epigenomic changes.**
 ```
 
+
+<!-- Now let's look into iTRAC data -->
+
+```{r}
+# itrac <- fread("www/iTRAC.csv")
+# itrac[1,]
+# colnames(itrac)
+
+# foo <- function(value, class) {
+#   tryCatch({
+#     wilcox.test(value ~ class) %>% broom::tidy()
+#   }, error = function(e) {
+#     return(NULL)
+#   })
+# }
+
+# res <- itrac[,
+#   list(`Protein ID`, `Gene ID`,
+#     C1=as.numeric(`Intensity Control 3681(TMT10-126)`), 
+#     C2=as.numeric(`Intensity Control 3649(TMT10-127N)`), 
+#     C3=as.numeric(`Intensity Control 3823(TMT10-128N)`), 
+#     C4=as.numeric(`Intensity Control 97-10-A163A(TMT10-130C)`), 
+#     C5=as.numeric(`Intensity Control 08-01-A021a(TMT10-131)`), 
+#     PD1=as.numeric(`Intensity PD 3623(TMT10-127C)`), 
+#     PD2=as.numeric(`Intensity PD 3604(TMT10-128C)`), 
+#     PD3=as.numeric(`Intensity PD 3825(TMT10-129N)`), 
+#     PD4=as.numeric(`Intensity PD 3531(TMT10-129C)`), 
+#     PD5=as.numeric(`Intensity PD 3645(TMT10-130N)`))
+# ] %>%
+#   reshape2::melt(id.vars = 1:2) %>% 
+#   setDT %>% 
+#   .[, Class := substring(variable, 1, 1)] %>%
+#   .[, foo(value, Class), list(`Protein ID`, `Gene ID`)]
+
+# warnings()
+# res[, hist(p.value)]
+# res[, q := p.adjust(p.value, "fdr")]
+# res[]
+# res[, hist(q)]
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
