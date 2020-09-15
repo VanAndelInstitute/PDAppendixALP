@@ -316,52 +316,249 @@ kable_styling(bootstrap_options="hover")
 ```
 
 
-<!-- Now let's look into iTRAC data -->
+# iTRAQ data
+
+The goal of this data was to validate previous proteomics results. 
+
+## Bulk tissue
 
 ```{r}
-# itrac <- fread("www/iTRAC.csv")
-# itrac[1,]
-# colnames(itrac)
+wc <- fread("./www/iTRAQ_wholeCell_human_NoNormalization_proteins.csv")
+setnames(wc, "Gene", "Gene ID")
+key <- fread("./www/iTRAQ_wholeCell_key.tsv")
+key[, Case := as.character(Case)]
 
-# foo <- function(value, class) {
-#   tryCatch({
-#     wilcox.test(value ~ class) %>% broom::tidy()
-#   }, error = function(e) {
-#     return(NULL)
-#   })
-# }
-
-# res <- itrac[,
-#   list(`Protein ID`, `Gene ID`,
-#     C1=as.numeric(`Intensity Control 3681(TMT10-126)`), 
-#     C2=as.numeric(`Intensity Control 3649(TMT10-127N)`), 
-#     C3=as.numeric(`Intensity Control 3823(TMT10-128N)`), 
-#     C4=as.numeric(`Intensity Control 97-10-A163A(TMT10-130C)`), 
-#     C5=as.numeric(`Intensity Control 08-01-A021a(TMT10-131)`), 
-#     PD1=as.numeric(`Intensity PD 3623(TMT10-127C)`), 
-#     PD2=as.numeric(`Intensity PD 3604(TMT10-128C)`), 
-#     PD3=as.numeric(`Intensity PD 3825(TMT10-129N)`), 
-#     PD4=as.numeric(`Intensity PD 3531(TMT10-129C)`), 
-#     PD5=as.numeric(`Intensity PD 3645(TMT10-130N)`))
-# ] %>%
-#   reshape2::melt(id.vars = 1:2) %>% 
-#   setDT %>% 
-#   .[, Class := substring(variable, 1, 1)] %>%
-#   .[, foo(value, Class), list(`Protein ID`, `Gene ID`)]
-
-# warnings()
-# res[, hist(p.value)]
-# res[, q := p.adjust(p.value, "fdr")]
-# res[]
-# res[, hist(q)]
-
-
+dt <- 
+  suppressWarnings(
+    wc[,
+      list(`Accession`, `Gene ID`, Coverage = `Coverage (%)`, 
+        Unique = `#Unique`,
+        `3690` = as.numeric(`Intensity 3690 Control(TMT10-126)`),
+        `3681` = as.numeric(`Intensity 3681 Control(TMT10-127N)`),
+        `3623` = as.numeric(`Intensity 3623 PD(TMT10-127C)`),
+        `3649` = as.numeric(`Intensity 3649 Control(TMT10-128N)`),
+        `3823` = as.numeric(`Intensity 3823 Control(TMT10-128C)`),
+        `3604` = as.numeric(`Intensity 3604 PD(TMT10-129N)`),
+        `3628` = as.numeric(`Intensity 3628 Control(TMT10-129C)`),
+        `3825` = as.numeric(`Intensity 3825 PD(TMT10-130N)`),
+        `3531` = as.numeric(`Intensity 3531 PD(TMT10-130C)`),
+        `3645` = as.numeric(`Intensity 3645 PD(TMT10-131)`))
+    ])
+dt <- 
+  dt %>%
+    .[Unique > 2] %>%
+    reshape2::melt(id.vars = 1:4) %>% 
+    setDT %>% 
+    .[, value := log(value + 1)] %>%
+    .[, value := scale(value), variable]
+dt <- merge(dt, key, by.x = 'variable', by.y = 'Case')
 ```
 
 
+The number of proteins interrogated across all samples: 
+```{r, include=TRUE}
+dt[, length(unique(`Gene ID`))]
+```
+
+The fraction of ALP genes interrogated in this analysis: 
+```{r, include=TRUE}
+genesFromALP %in% dt[, unique(`Gene ID`)] %>% mean
+```
+
+The fraction of lysosome pathway genes interrogated:
+```{r, include=TRUE}
+pathways[[3]]$genes %in% dt[, unique(`Gene ID`)]  %>% mean
+```
 
 
+```{r}
+# Plot of value distribution after scale
+dt %>%
+  ggplot(aes(variable, value, color = `Condition`)) + 
+  geom_violin()
 
+# PCA 
+pca <- dt %>%
+  reshape2::acast(`Accession` ~ variable, value.var = 'value') %>%
+  as.data.frame %>%
+  t %>%
+  prcomp
+pairs(pca$x[, 1:3], col = key[, `Condition`] %>% as.factor)
+# One sample may be an ooutlier (C5), but let's keep it for now
+```
+
+A robust linear model using age, sample sex and postmortem interval as covariates was computed for each protin. 
+
+```{r}
+# Compute linear model fits
+X <- reshape2::acast(dt, `Accession` ~ variable, value.var = 'value')
+D <- model.matrix( ~ Condition + Age + Sex + PMI,
+  data = key[match(colnames(X), Case)])
+fit <- 
+  lmFit(X, D, method="robust", maxit=100) %>% 
+  eBayes() %>%
+  topTable(coef=2, number=Inf, sort.by = "none") %>%
+  as.data.table(keep.rownames=TRUE)
+setnames(fit, "rn", "Accession")
+fit <- 
+  merge(
+    fit, 
+    wc[!duplicated(`Gene ID`), list(`Accession` = as.character(`Accession`), `Gene ID`)], 
+    by = "Accession")
+```
+
+Number of significant hits: 
+
+```{r, include=TRUE}
+fit[, list( `Q < 0.05` = sum(adj.P.Val < 0.05),
+              `Q < 0.2`  = sum(adj.P.Val < 0.2),
+              `P < 0.05` = sum(P.Value < 0.05),
+              .N)]
+```
+
+Correlation of fold changes in label-free and iTRAQ data using
+proteins that were deemed significant in both datasets.
+
+```{r, include=TRUE}
+merge(
+  protApx[Reliable == TRUE & abs(FC) > 0.2, list(Gene, FC)],
+  fit[!duplicated(`Gene ID`) & adj.P.Val < 0.05, list(Gene = `Gene ID`, FC = logFC, P=adj.P.Val)],
+  by = "Gene") %>%
+.[, list(.N, cor.test(FC.x, FC.y, method="spearman") %>% broom::tidy())]
+```
+
+The ALP proteins that were significantly affected by PD in both approaches 
+
+```{r, include=TRUE}
+merge(
+  protApx[Reliable == TRUE, list(Gene, FC)],
+  fit[!duplicated(`Gene ID`), list(Gene = `Gene ID`, FC = logFC, P=P.Value, Q=adj.P.Val)],
+  by = "Gene") %>%
+.[Gene %in% genesFromALP] %>%
+.[abs(FC.x) > 0.2 & Q < 0.05]
+```
+
+
+## Lysosome-enriched fraction
+
+```{r}
+pathways <- readRDS("../Discover_Pathways/humanPathways.RDS")
+lys <- fread("./www/iTRAQ_lysozome_human_NoNormalization_proteins.csv")
+key <- fread("./www/iTRAQ_lysozome_key.tsv")
+
+
+# Compute differences
+# lys
+dt <- 
+  suppressWarnings(
+    lys[,
+      list(`Protein ID`, `Gene ID`, Coverage = `Coverage (%)`, 
+        Unique = `#Unique`,
+        `3681`=as.numeric(`Intensity Control 3681(TMT10-126)`), 
+        `3649`=as.numeric(`Intensity Control 3649(TMT10-127N)`), 
+        `3623`=as.numeric(`Intensity PD 3623(TMT10-127C)`), 
+        `3823`=as.numeric(`Intensity Control 3823(TMT10-128N)`), 
+        `3604`=as.numeric(`Intensity PD 3604(TMT10-128C)`), 
+        `3825`=as.numeric(`Intensity PD 3825(TMT10-129N)`), 
+        `3531`=as.numeric(`Intensity PD 3531(TMT10-129C)`), 
+        `3645`=as.numeric(`Intensity PD 3645(TMT10-130N)`),
+        `97-10-A163a`=as.numeric(`Intensity Control 97-10-A163A(TMT10-130C)`), 
+        `08-01-A021a`=as.numeric(`Intensity Control 08-01-A021a(TMT10-131)`)
+      )
+    ])
+
+dt <- 
+  dt %>%
+    .[Unique > 2] %>%
+    reshape2::melt(id.vars = 1:4) %>% 
+    setDT %>% 
+    .[, value := log(value + 1)] %>%
+    .[, value := scale(value), variable]
+dt <- merge(dt, key, by.x = 'variable', by.y = 'case number')
+```
+
+The number of proteins interrogated across all samples: 
+```{r, include=TRUE} 
+dt[, length(unique(`Gene ID`))]
+```
+
+The fraction of ALP genes interrogated in this analysis: 
+```{r, include=TRUE} 
+genesFromALP %in% dt[, unique(`Gene ID`)] %>% mean
+```
+
+The fraction of lysosome pathway genes interrogated:
+```{r, include=TRUE} 
+pathways[[3]]$genes %in% dt[, unique(`Gene ID`)]  %>% mean
+```
+
+
+```{r}
+# Plot of value distribution after scale
+dt %>%
+  ggplot(aes(variable, value, color = `summary diagnosis`)) + 
+  geom_violin()
+
+# PCA 
+pca <- dt %>%
+  reshape2::acast(`Protein ID` ~ variable, value.var = 'value') %>%
+  as.data.frame %>%
+  t %>%
+  prcomp
+pairs(pca$x[, 1:3], col = key[, `summary diagnosis`] %>% as.factor)
+# One sample may be an ooutlier (C5), but let's keep it for now
+```
+
+A robust linear model using age, sample sex and postmortem interval as covariates was computed for each protin. 
+
+```{r}
+# Compute linear model fits
+X <- reshape2::acast(dt, `Protein ID` ~ variable, value.var = 'value')
+D <- model.matrix( ~ `summary diagnosis` + `age (years)` + sex + `postmortem interval (h)`,
+  data = key[match(colnames(X), `case number`)])
+fit <- 
+  lmFit(X, D, method="robust", maxit=100) %>% 
+  eBayes() %>%
+  topTable(coef=2, number=Inf, sort.by = "none") %>%
+  as.data.table(keep.rownames=TRUE)
+setnames(fit, "rn", "Protein ID")
+fit <- 
+  merge(
+    fit, 
+    lys[!duplicated(`Gene ID`), list(`Protein ID` = as.character(`Protein ID`), `Gene ID`)], 
+    by = "Protein ID")
+```
+
+Number of significant hits: 
+
+```{r, include=TRUE}
+fit[, list( `Q < 0.05` = sum(adj.P.Val < 0.05),
+              `Q < 0.2`  = sum(adj.P.Val < 0.2),
+              `P < 0.05` = sum(P.Value < 0.05),
+              .N)]
+```
+
+Correlation of fold changes in label-free and iTRAQ data using
+proteins that were deemed significant in both datasets.
+
+```{r, include=TRUE}
+merge(
+  protApx[Reliable == TRUE & abs(FC) > 0.2, list(Gene, FC)],
+  fit[!duplicated(`Gene ID`) & adj.P.Val < 0.05, list(Gene = `Gene ID`, FC = logFC, P=adj.P.Val)],
+  by = "Gene") %>%
+.[, list(.N, cor.test(FC.x, FC.y, method="spearman") %>% broom::tidy())]
+```
+
+The ALP proteins that were significantly affected by PD in both approaches 
+
+```{r, include=TRUE}
+merge(
+  protApx[Reliable == TRUE, list(Gene, FC)],
+  fit[!duplicated(`Gene ID`), list(Gene = `Gene ID`, FC = logFC, P=P.Value, Q=adj.P.Val)],
+  by = "Gene") %>%
+.[Gene %in% genesFromALP] %>%
+.[abs(FC.x) > 0.2 & Q < 0.05]
+```
 
 
 
