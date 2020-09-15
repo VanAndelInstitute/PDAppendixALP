@@ -387,12 +387,12 @@ pairs(pca$x[, 1:3], col = key[, `Condition`] %>% as.factor)
 # One sample may be an ooutlier (C5), but let's keep it for now
 ```
 
-A robust linear model using age, sample sex and postmortem interval as covariates was computed for each protin. 
+A robust linear model implementing robust t-test between cases and controls.
 
 ```{r}
 # Compute linear model fits
 X <- reshape2::acast(dt, `Accession` ~ variable, value.var = 'value')
-D <- model.matrix( ~ Condition + Age + Sex + PMI,
+D <- model.matrix( ~ Condition,
   data = key[match(colnames(X), Case)])
 fit <- 
   lmFit(X, D, method="robust", maxit=100) %>% 
@@ -400,7 +400,7 @@ fit <-
   topTable(coef=2, number=Inf, sort.by = "none") %>%
   as.data.table(keep.rownames=TRUE)
 setnames(fit, "rn", "Accession")
-fit <- 
+fitBulk <- 
   merge(
     fit, 
     wc[!duplicated(`Gene ID`), list(`Accession` = as.character(`Accession`), `Gene ID`)], 
@@ -410,32 +410,22 @@ fit <-
 Number of significant hits: 
 
 ```{r, include=TRUE}
-fit[, list( `Q < 0.05` = sum(adj.P.Val < 0.05),
+fitBulk[, list( `Q < 0.05` = sum(adj.P.Val < 0.05),
               `Q < 0.2`  = sum(adj.P.Val < 0.2),
               `P < 0.05` = sum(P.Value < 0.05),
               .N)]
 ```
 
-Correlation of fold changes in label-free and iTRAQ data using
-proteins that were deemed significant in both datasets.
-
 ```{r, include=TRUE}
+require(weights)
 merge(
   protApx[Reliable == TRUE & abs(FC) > 0.2, list(Gene, FC)],
-  fit[!duplicated(`Gene ID`) & adj.P.Val < 0.05, list(Gene = `Gene ID`, FC = logFC, P=adj.P.Val)],
+  fitBulk[!duplicated(`Gene ID`), list(Gene = `Gene ID`, FC = logFC, P=P.Value)],
   by = "Gene") %>%
-.[, list(.N, cor.test(FC.x, FC.y, method="spearman") %>% broom::tidy())]
-```
-
-The ALP proteins that were significantly affected by PD in both approaches 
-
-```{r, include=TRUE}
-merge(
-  protApx[Reliable == TRUE, list(Gene, FC)],
-  fit[!duplicated(`Gene ID`), list(Gene = `Gene ID`, FC = logFC, P=P.Value, Q=adj.P.Val)],
-  by = "Gene") %>%
-.[Gene %in% genesFromALP] %>%
-.[abs(FC.x) > 0.2 & Q < 0.05]
+.[, ALP := Gene %in% genesFromALP] %>%
+.[, wtd.cor(FC.x, FC.y, weight=-log(P))] %>%
+kable() %>%
+kable_styling(bootstrap_options="hover")
 ```
 
 
@@ -509,20 +499,23 @@ pairs(pca$x[, 1:3], col = key[, `summary diagnosis`] %>% as.factor)
 # One sample may be an ooutlier (C5), but let's keep it for now
 ```
 
-A robust linear model using age, sample sex and postmortem interval as covariates was computed for each protin. 
+A robust linear model implementing a robust t-test for comparison between cases and controls
 
 ```{r}
 # Compute linear model fits
 X <- reshape2::acast(dt, `Protein ID` ~ variable, value.var = 'value')
-D <- model.matrix( ~ `summary diagnosis` + `age (years)` + sex + `postmortem interval (h)`,
-  data = key[match(colnames(X), `case number`)])
+# D <- model.matrix( ~ `summary diagnosis` + `age (years)` + sex + `postmortem interval (h)`,
+#   data = key[match(colnames(X), `case number`)])
+D <- model.matrix( ~ `summary diagnosis`,
+   data = key[match(colnames(X), `case number`)])
+
 fit <- 
   lmFit(X, D, method="robust", maxit=100) %>% 
   eBayes() %>%
   topTable(coef=2, number=Inf, sort.by = "none") %>%
   as.data.table(keep.rownames=TRUE)
 setnames(fit, "rn", "Protein ID")
-fit <- 
+fitLys <- 
   merge(
     fit, 
     lys[!duplicated(`Gene ID`), list(`Protein ID` = as.character(`Protein ID`), `Gene ID`)], 
@@ -532,35 +525,28 @@ fit <-
 Number of significant hits: 
 
 ```{r, include=TRUE}
-fit[, list( `Q < 0.05` = sum(adj.P.Val < 0.05),
+fitLys[, list( `Q < 0.05` = sum(adj.P.Val < 0.05),
               `Q < 0.2`  = sum(adj.P.Val < 0.2),
               `P < 0.05` = sum(P.Value < 0.05),
               .N)]
 ```
 
+
 Correlation of fold changes in label-free and iTRAQ data using
-proteins that were deemed significant in both datasets.
+proteins that were deemed significant in the previous dataset datasets.
+
 
 ```{r, include=TRUE}
+require(weights)
 merge(
   protApx[Reliable == TRUE & abs(FC) > 0.2, list(Gene, FC)],
-  fit[!duplicated(`Gene ID`) & adj.P.Val < 0.05, list(Gene = `Gene ID`, FC = logFC, P=adj.P.Val)],
+  fitLys[!duplicated(`Gene ID`), list(Gene = `Gene ID`, FC = logFC, P=P.Value)],
   by = "Gene") %>%
-.[, list(.N, cor.test(FC.x, FC.y, method="spearman") %>% broom::tidy())]
+.[, ALP := Gene %in% genesFromALP] %>%
+.[, wtd.cor(FC.x, FC.y, weight=-log(P))] %>%
+kable() %>%
+kable_styling(bootstrap_options="hover")
 ```
-
-The ALP proteins that were significantly affected by PD in both approaches 
-
-```{r, include=TRUE}
-merge(
-  protApx[Reliable == TRUE, list(Gene, FC)],
-  fit[!duplicated(`Gene ID`), list(Gene = `Gene ID`, FC = logFC, P=P.Value, Q=adj.P.Val)],
-  by = "Gene") %>%
-.[Gene %in% genesFromALP] %>%
-.[abs(FC.x) > 0.2 & Q < 0.05]
-```
-
-
 
 
 
