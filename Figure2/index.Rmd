@@ -560,7 +560,7 @@ names(annotated) <- names(data)
 # Compute overlaps
 ##################################
 n <- ncol(annotated[[1]])
-dimensions <- colnames(annotated[[1]])[14:n]
+dimensions <- colnames(annotated[[1]])[15:n]
 dt <- withCluster(
   foreach( brain = names(annotated)[-1], .combine = rbind) %:% 
   foreach( dim   = dimensions, .combine = rbind) %dopar% {
@@ -686,7 +686,7 @@ ggdraw() +
   draw_plot(legend, x = 0.83, y = 0.25, width = 0.5, height = 0.2) + 
   draw_text("* p < 0.05 \n** p < 0.01 \n*** p < 0.001", x = 0.95, y = 0.35, size = 7 ) +
   draw_plot_label(
-    label = c("A", "B", "C"),
+    label = c("a", "b", "c"),
     size = 10,
     x = c(0, 0.73, 0),
     y = c(1, 1,    0.3))

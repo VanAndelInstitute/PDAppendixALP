@@ -51,7 +51,7 @@ url <- "../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padl
 stopifnot(file.exists(url))
 ```
 
-- **[Additional file 11](`r url`) DNA methylation changes in the aging appendix of healthy individuals and PD patients.**
+**[Additional file 12](`r url`) DNA methylation changes in the aging appendix of healthy individuals and PD patients.**
 
 
 ```{r, include=TRUE, results='asis'}
@@ -370,7 +370,7 @@ url <- "../Brain_AgeAcceleration_Padlock/www/m6_Brain_AgeAcceleration_Padlock.cs
 stopifnot(file.exists(url))
 ```
 
-- **[Additional file 12](`r url`) DNA methylation changes in aging prefrontal cortex neurons of healthy individuals and PD patients.**
+**[Additional file 13](`r url`) DNA methylation changes in aging prefrontal cortex neurons of healthy individuals and PD patients.**
 
 
 ```{r, include=TRUE, results='asis'}
@@ -598,7 +598,7 @@ url <- "../Brain_AgeAcceleration_OFB_Padlock_CGonly/www/m6_Brain_AgeAcceleration
 stopifnot(file.exists(url))
 ```
 
-- **[Additional file 13](`r url`) DNA methylation changes in aging olfactory bulb of healthy individuals and PD patients.**
+**[Additional file 14](`r url`) DNA methylation changes in aging olfactory bulb of healthy individuals and PD patients.**
 
 
 
@@ -776,7 +776,7 @@ url <- "./www/Aging_Hallmarks.csv"
 stopifnot(file.exists(url))
 ```
 
-- **[Additional file 14](`r url`) ALP genes consistently epigenetically altered with aging in the healthy appendix and healthy prefrontal cortex neurons.**
+**[Additional file 15](`r url`) ALP genes consistently epigenetically altered with aging in the healthy appendix and healthy prefrontal cortex neurons.**
 
 
 # Aging in PD and control individuals
