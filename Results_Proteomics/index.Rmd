@@ -348,7 +348,7 @@ dt <-
 
 dt <- 
   dt %>%
-    .[Unique > 2] %>%
+    .[Unique >= 2] %>%
     reshape2::melt(id.vars = 1:4) %>% 
     setDT %>% 
     .[, value := log(value + 1)] %>%
@@ -471,4 +471,20 @@ stopifnot(file.exists(url))
 ```
 
 - **[Additional file 11](`r url`) iTRAQ-labeled proteomics analysis of the PD appendix.**
+
+Replication of findings in the genes mentioned in the test:
+
+```{r, include=TRUE}
+fitLys[ `Gene ID` %in% c("SNCA", "GPNMB", "NAMPT", "HSPA8", "VPS35")]
+```
+
+
+
+
+
+
+
+
+
+
 

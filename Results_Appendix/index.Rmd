@@ -95,7 +95,7 @@ url <- "../Appendix_PDvsControls_Padlock/www/m6_Appendix_PDvsControls_Padlock.cs
 stopifnot(file.exists(url))
 ```
 
-- **[Additional File 2](`r url`) DNA methylation changes in the appendix of PD patients relative to controls.**
+**[Additional File 2](`r url`) DNA methylation changes in the appendix of PD patients relative to controls.**
 
 
 ## Enrichment of genomic elements
