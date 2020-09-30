@@ -363,6 +363,7 @@ dt[, length(unique(`Gene ID`))]
 
 The fraction of ALP genes interrogated in this analysis: 
 ```{r, include=TRUE} 
+genesFromALP %in% dt[, unique(`Gene ID`)] %>% sum
 genesFromALP %in% dt[, unique(`Gene ID`)] %>% mean
 ```
 
@@ -475,7 +476,10 @@ stopifnot(file.exists(url))
 Replication of findings in the genes mentioned in the test:
 
 ```{r, include=TRUE}
-fitLys[ `Gene ID` %in% c("SNCA", "GPNMB", "NAMPT", "HSPA8", "VPS35")]
+fitLys[ `Gene ID` %in% c("SNCA", "GPNMB", "NAMPT", "HSPA8", "VPS35")] %>%
+.[order(logFC)] %>%
+kable() %>%
+kable_styling(bootstrap_options="hover")
 ```
 
 
