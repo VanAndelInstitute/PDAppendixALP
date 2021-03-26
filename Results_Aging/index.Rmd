@@ -849,7 +849,7 @@ X <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="Control aging", Tissue = "OFB")
+  mutate(Aging="Age effect, control", Tissue = "OFB")
 
 X2 <- 
   merge(
@@ -857,7 +857,7 @@ X2 <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="PD aging", Tissue = "OFB")
+  mutate(Aging="Age effect, PD", Tissue = "OFB")
 
 pd <- rbindlist(list(pd, X, X2))
 
@@ -879,7 +879,7 @@ pd %>%
   ggplot(., aes(abs(Age), abs(PD))) + 
     geom_point(shape = 1, color = "grey") +
     geom_smooth(method = "lm", color = "black", size = 0.5) + 
-    xlab("Epigenetic aging rate, absolute FC") + 
+    xlab("Epigenetic age effect, absolute magnitude") + 
     ylab("PD diagnosis effect, absolute FC") +
     geom_text(data = textLayer, aes(label = TeX(label, output="character")), inherit.aes=FALSE, parse = TRUE, 
       x = -Inf, y = Inf, hjust = -0.1, vjust = 1) +
@@ -1028,7 +1028,7 @@ plotGeneTrace <- function(gene="SNCA", qT = 0.05, stacking = "squish", histart=9
 
   plotTracks(
       list(gtrack, biomTrack, dtr1, dtr2),
-      groups = c("PD affected mean", "Control aging", "PD aging"),
+      groups = c("PD affected mean", "Age effect, control", "Age effect, PD"),
       from = from, to = to,
       type = 'h', jitter.x = TRUE,
       baseline = c(-1.3, 1.3), col.baseline = "red", lwd.baseline = 0.25,
