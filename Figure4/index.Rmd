@@ -307,7 +307,7 @@ df.venn <- data.frame(x = c(0, 0.866, -0.866),
                       y = c(1, -0.5, -0.5), 
                       x.labels = c(-2, 1.2, -1.2), 
                       y.labels = c(2, -2.2, -2.2),
-                      labels = c('PD vs \nControl', 'PD Aging', 'Control Aging'))
+                      labels = c('PD vs \nControl', 'Age, PD', 'Age, Control'))
 vdc <- vennCounts(dt[, list(IsHealthyAging, IsPDAging, IsPD)])
 class(vdc) <- 'matrix'
 df.vdc <- as.data.frame(vdc)[-1,] %>%
@@ -366,7 +366,7 @@ df.venn <- data.frame(x = c(0, 0.866, -0.866),
                       y = c(1, -0.5, -0.5), 
                       x.labels = c(-2, 1.2, -1.2), 
                       y.labels = c(2, -2.2, -2.2),
-                      labels = c('PD vs \nControl', 'PD Aging', 'Control Aging'))
+                      labels = c('PD vs \nControl', 'Age, PD', 'Age, Control'))
 vdc <- vennCounts(dt[, list(IsHealthyAging, IsPDAging, IsPD)])
 class(vdc) <- 'matrix'
 df.vdc <- as.data.frame(vdc)[-1,] %>%
@@ -420,7 +420,7 @@ pd[IsPD == FALSE, PD := 0]
 pd[, Label := paste(IsHealthy, IsPD)]
 pd[, Label := factor(Label, 
                     levels = c("TRUE FALSE", "TRUE TRUE", "FALSE TRUE"),
-                    labels = c("Control aging", "Control & PD aging", "PD aging"))]
+                    labels = c("Age effect, Control", "Control & PD aging", "Age effect, PD"))]
 pd <- pd[order(Label, PD+Healthy)]
 pd[, X := 1:.N]
 pd[, Tissue := "Appendix"]
@@ -430,9 +430,9 @@ pF <-
   ggplot(aes(x=X, xend=X, y=Healthy, yend=PD)) + 
   geom_segment(size = 0.25, color = "grey85") +
    geom_point(
-    aes(x = X, y = Healthy, color = "Control aging"), size = 0.25) +
+    aes(x = X, y = Healthy, color = "Age effect, controls"), size = 0.25) +
   geom_point(
-    aes(x = X, y = PD, color = "PD aging"), size = 0.25) +
+    aes(x = X, y = PD, color = "Age effect, PD"), size = 0.25) +
   geom_segment(
       data = function(x) x[Gene %in% geneList],
       size = 0.5, color = "orange") +   
@@ -443,7 +443,7 @@ pF <-
       size = 2.2,
       aes(label = Gene)
       ) + 
-  ylab("Aging rate,\nmean M-value/year") + 
+  ylab("Age effect,\nmean M-value/year") + 
   facet_grid(Tissue~.) + 
   scale_y_continuous(
       labels = scales::number_format(accuracy = 0.01)) + 
@@ -492,7 +492,7 @@ pd[IsPD == FALSE, PD := 0]
 pd[, Label := paste(IsHealthy, IsPD)]
 pd[, Label := factor(Label, 
                     levels = c("TRUE FALSE", "TRUE TRUE", "FALSE TRUE"),
-                    labels = c("Control aging", "Control & PD aging", "PD aging"))]
+                    labels = c("Age effect, Control", "Control & PD aging", "Age effect, PD"))]
 pd <- pd[order(Label, PD+Healthy)]
 pd[, X := 1:.N]
 pd[, Tissue := "PFC"]
