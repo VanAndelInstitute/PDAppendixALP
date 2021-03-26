@@ -430,7 +430,7 @@ pF <-
   ggplot(aes(x=X, xend=X, y=Healthy, yend=PD)) + 
   geom_segment(size = 0.25, color = "grey85") +
    geom_point(
-    aes(x = X, y = Healthy, color = "Age effect, controls"), size = 0.25) +
+    aes(x = X, y = Healthy, color = "Age effect, Control"), size = 0.25) +
   geom_point(
     aes(x = X, y = PD, color = "Age effect, PD"), size = 0.25) +
   geom_segment(
@@ -447,7 +447,7 @@ pF <-
   facet_grid(Tissue~.) + 
   scale_y_continuous(
       labels = scales::number_format(accuracy = 0.01)) + 
-  scale_color_manual("", values = c(`Control aging` = '#0080FF', `PD aging` = '#FF00FF')) + 
+  scale_color_manual("", values = c(`Age effect, Control` = '#0080FF', `Age effect, PD` = '#FF00FF')) + 
   theme_publication() + 
   theme(
       legend.position = c(0.5, 0.95),
@@ -517,7 +517,7 @@ pG <-
       size = 2.2,
       aes(label = Gene)
       ) + 
-  ylab("Aging rate,\nmean M-value/year") +
+  ylab("Age effect,\nmean M-value/year") +
   xlab("Gene") + 
   scale_y_continuous(
       labels = scales::number_format(accuracy = 0.01)) + 
