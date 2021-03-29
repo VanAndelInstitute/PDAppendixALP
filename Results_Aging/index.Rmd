@@ -798,7 +798,7 @@ X <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="Control aging", Tissue = "Appendix")
+  mutate(Aging="Age effect, Control", Tissue = "Appendix")
 
 X2 <- 
   merge(
@@ -806,7 +806,7 @@ X2 <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="PD aging", Tissue = "Appendix")
+  mutate(Aging="Age effect, PD", Tissue = "Appendix")
 
 pd <- rbind(X, X2)
 
@@ -823,7 +823,7 @@ X <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="Control aging", Tissue = "PFC")
+  mutate(Aging="Age effect, Control", Tissue = "PFC")
 
 X2 <- 
   merge(
@@ -831,7 +831,7 @@ X2 <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="PD aging", Tissue = "PFC")
+  mutate(Aging="Age effect, PD", Tissue = "PFC")
 
 pd <- rbindlist(list(pd, X, X2))
 

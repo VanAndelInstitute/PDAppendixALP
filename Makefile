@@ -6,6 +6,7 @@ objects=\
   Appendix_PDvsControls_Padlock/index.html \
   Appendix_PDvsControls_RNAseq/index.html \
   Appendix_AgeAcceleration_Padlock/index.html \
+  Appendix_AgeAcceleration_Padlock_AgeMatched/index.html \
   Appendix_AgeAcceleration_RNAseq/index.html \
   Brain_PFC_Padlock_CGonly/index.html \
   Brain_OFB_Padlock_CGonly/index.html \
