@@ -604,6 +604,64 @@ stopifnot(file.exists(url))
 **[Additional file 14](`r url`) DNA methylation changes in aging olfactory bulb of healthy individuals and PD patients.**
 
 
+# Overlap of aging loci/genes across tissues
+
+Here we take the loci that show aging in different tissues of control samples. We try to evaluate how loci and genes overlap across tissues. 
+
+```{r, include=TRUE}
+foo <- function(dt, A, B, title) {
+  dt[, table(get(A), get(B))] %>%
+  fisher.test %>%
+  broom::tidy() %>% 
+  mutate(Test = title) %>%
+  dplyr::select(Test, estimate, p.value, conf.low, conf.high)
+}
+
+
+A <- apax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.DiagnosisControl.Age, 
+    P = P.DiagnosisControl.Age, 
+    Q = p.adjust(P.DiagnosisControl.Age, "fdr"))
+  ] %>%
+  .[, list(ApxAging = wmean(FC, -log(P)), IsApxAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+B <- pfcax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.GroupCTRL.Age, 
+    P = P.GroupCTRL.Age, 
+    Q = p.adjust(P.GroupCTRL.Age, "fdr"))
+  ] %>%
+  .[, list(PFCAging = wmean(FC, -log(P)), IsPFCAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+C <- ofbax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.GroupCTRL.Age, 
+    P = P.GroupCTRL.Age, 
+    Q = p.adjust(P.GroupCTRL.Age, "fdr"))
+  ] %>%
+  .[, list(OFBAging = wmean(FC, -log(P)), IsOFBAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+dt <- merge(merge(A, B, by = "Gene"), C, by = "Gene")
+
+list(
+  foo(dt, "IsApxAging", "IsPFCAging", title = "Appendix vs PFC"),
+  foo(dt, "IsApxAging", "IsOFBAging", title = "Appendix vs OFB"),
+  foo(dt, "IsPFCAging", "IsOFBAging", title = "PFC vs OFB")
+  ) %>%
+purrr::map(as.data.table) %>%
+rbindlist %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+In addition to significant overlap, there is correlation of absolute aging effects
+
+```{r, include=TRUE}
+dt[IsApxAging==TRUE & IsPFCAging==TRUE, 
+  cor.test(abs(ApxAging), abs(PFCAging)) %>% broom::tidy(),
+  ]
+```
 
 # Enrichment of ALP pathways in the epigenome
 
@@ -1242,10 +1300,17 @@ myplots[[3]] <- plotAppendixChipEnrichment(dtlist[[2]], wrap = "vertical")
 myplots[[4]] <- plotEpiRoadmapEnrichment(  dtlist[[3]], wrap = "vertical")
 ```
 
-```{r, include=TRUE, fig.cap="**Figure SXXX. Genomic elements enriched with differentially methylated cytosines in the healthy aging appendix.**"}
+```{r, include=TRUE, fig.cap="**Figure S18. Genomic elements enriched with differentially methylated cytosines in the healthy aging appendix using only samples older than 62 years.**"}
 ggarrange(myplots[[1]], myplots[[2]], myplots[[3]],
   ncol = 3, nrow = 1, labels = LETTERS[1:3],
   widths = c(4, 7, 3),
   common.legend = TRUE)
 ```
 
+
+```{r}
+url <- "../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padlock.csv"
+stopifnot(file.exists(url))
+```
+
+**[Additional file 20](`r url`) DNA methylation changes in the aging appendix of healthy individuals and PD patients restricted to those above 62 years of age.**

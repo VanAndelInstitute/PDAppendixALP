@@ -336,7 +336,7 @@ url <- "./www/geneEnrichment.csv"
 
 ```{r}
 studies <- list.files(path = "../", pattern = "*Padlock*|*RNAseq*")
-
+studies <- setdiff(studies, "Appendix_AgeAcceleration_Padlock_AgeMatched")
 res <-
 foreach (study = studies) %do% {
 	message("Loading study: ", study)
@@ -363,6 +363,7 @@ names(res) <- studies
 file <- "www/sampleKey.xlsx"
 unlink(file)
 for (study in studies) {
+  message(study)
 	write.xlsx(res[[study]], file, sheetName=study, 
 	  col.names=TRUE, row.names=FALSE, append=TRUE)
 }
