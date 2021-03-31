@@ -930,7 +930,7 @@ pCHypo <- plot_pC(dtHypo)+ggtitle("Hypo-methylation")
 saveRDS(pC, "pC.RDS")
 ```
 
-```{r, include=TRUE, fig.width=7.2, fig.height=4, fig.cap="**Figure S_XXX. XXX.**"}
+```{r, include=TRUE, fig.width=7.2, fig.height=4, fig.cap="**Figure S19. Genomic elements exhibiting similar changes in DNA methylation in the PD brain and PD appendix stratified by the direction of methylation change.**"}
 require("cowplot")
 ggdraw() +
   draw_plot(pCHyper + theme(legend.position = "none"),
