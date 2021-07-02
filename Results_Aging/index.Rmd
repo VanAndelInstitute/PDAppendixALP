@@ -42,6 +42,9 @@ fdr <- function(x) { p.adjust(x, "fdr")}
 
 ```{r}
 apax <- fread("../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padlock.csv")
+
+apax2 <- fread("../Appendix_AgeAcceleration_Padlock_AgeMatched/www/m6_Appendix_AgeAcceleration_Padlock_AgeMatched.csv")
+
 apx <- fread("../Appendix_PDvsControls_Padlock/www/m6_Appendix_PDvsControls_Padlock.csv")
 apad <- readRDS("../Appendix_AgeAcceleration_Padlock/www/m6_methylation.RDS")
 ```
@@ -601,6 +604,64 @@ stopifnot(file.exists(url))
 **[Additional file 14](`r url`) DNA methylation changes in aging olfactory bulb of healthy individuals and PD patients.**
 
 
+# Overlap of aging loci/genes across tissues
+
+Here we take the loci that show aging in different tissues of control samples. We try to evaluate how loci and genes overlap across tissues. 
+
+```{r, include=TRUE}
+foo <- function(dt, A, B, title) {
+  dt[, table(get(A), get(B))] %>%
+  fisher.test %>%
+  broom::tidy() %>% 
+  mutate(Test = title) %>%
+  dplyr::select(Test, estimate, p.value, conf.low, conf.high)
+}
+
+
+A <- apax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.DiagnosisControl.Age, 
+    P = P.DiagnosisControl.Age, 
+    Q = p.adjust(P.DiagnosisControl.Age, "fdr"))
+  ] %>%
+  .[, list(ApxAging = wmean(FC, -log(P)), IsApxAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+B <- pfcax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.GroupCTRL.Age, 
+    P = P.GroupCTRL.Age, 
+    Q = p.adjust(P.GroupCTRL.Age, "fdr"))
+  ] %>%
+  .[, list(PFCAging = wmean(FC, -log(P)), IsPFCAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+C <- ofbax %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.GroupCTRL.Age, 
+    P = P.GroupCTRL.Age, 
+    Q = p.adjust(P.GroupCTRL.Age, "fdr"))
+  ] %>%
+  .[, list(OFBAging = wmean(FC, -log(P)), IsOFBAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+dt <- merge(merge(A, B, by = "Gene"), C, by = "Gene")
+
+list(
+  foo(dt, "IsApxAging", "IsPFCAging", title = "Appendix vs PFC"),
+  foo(dt, "IsApxAging", "IsOFBAging", title = "Appendix vs OFB"),
+  foo(dt, "IsPFCAging", "IsOFBAging", title = "PFC vs OFB")
+  ) %>%
+purrr::map(as.data.table) %>%
+rbindlist %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+In addition to significant overlap, there is correlation of absolute aging effects
+
+```{r, include=TRUE}
+dt[IsApxAging==TRUE & IsPFCAging==TRUE, 
+  cor.test(abs(ApxAging), abs(PFCAging)) %>% broom::tidy(),
+  ]
+```
 
 # Enrichment of ALP pathways in the epigenome
 
@@ -798,7 +859,7 @@ X <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="Control aging", Tissue = "Appendix")
+  mutate(Aging="Age effect, Control", Tissue = "Appendix")
 
 X2 <- 
   merge(
@@ -806,7 +867,7 @@ X2 <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="PD aging", Tissue = "Appendix")
+  mutate(Aging="Age effect, PD", Tissue = "Appendix")
 
 pd <- rbind(X, X2)
 
@@ -823,7 +884,7 @@ X <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="Control aging", Tissue = "PFC")
+  mutate(Aging="Age effect, Control", Tissue = "PFC")
 
 X2 <- 
   merge(
@@ -831,7 +892,7 @@ X2 <-
     apxpdfit[P.Value < 0.05, list(ID, logFC)], 
     by = "ID") %>%
   setnames(c("ID", "Age", "PD")) %>%
-  mutate(Aging="PD aging", Tissue = "PFC")
+  mutate(Aging="Age effect, PD", Tissue = "PFC")
 
 pd <- rbindlist(list(pd, X, X2))
 
@@ -1045,3 +1106,211 @@ suppressWarnings(plotGeneTrace(gene="SNCA", qT=1, histart=90645250, hiend=907594
 suppressWarnings(plotGeneTrace("LMX1B", qT = 0.2, histart=129376722, hiend=129463311))
 suppressWarnings(plotGeneTrace(gene="MTOR", qT = 0.2, histart=11166588, hiend=11322608))
 ```
+
+# Appendix, age restricted, padlocks
+
+Here we look into appendix aging analysis where appendix samples were restricted to 62 years or older.
+
+
+```{r, include=TRUE, results='asis'}
+n <- apax2[, sum(p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, na.rm=TRUE)]
+glue("- Number of significant loci {n}")
+n <- apax2[p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, length(unique(Gene))]
+glue("- Number of genes affected {n}")
+r <- apad$key[Diagnosis == "Control", range(Age) %>% paste(collapse=":")]
+glue("- Age range of healthy controls {r}")
+```
+
+```{r, include=TRUE, results='asis'}
+value1 <- apax2[p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, mean(abs(B.DiagnosisControl.Age), na.rm=TRUE)] %>%
+  `*`(100) %>% round(digits=2)
+value2 <- apax2[p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, sum(p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, na.rm=TRUE), Gene] %>% .[, mean(V1)] %>% 
+  round(digits = 1)
+glue("- {value2} differentially methylated sites per affected ALP gene with {value1}% average methylation change per year")
+```
+
+## Hyper-methylation of aging loci
+
+Aging among controls and dominant direction of methylation change
+
+
+```{r, include=TRUE}
+t <-
+  apax2[, list(
+            Significant = ifelse(p.adjust(P.DiagnosisControl.Age, "fdr") < 0.05, "Significant", "NS"), 
+            Direction = ifelse(C.DiagnosisControl.Age < 0, "Hypo-M", "Hyper-M")
+           )] %>%
+  .[, table(Significant, Direction)] %>%
+  .[c("NS", "Significant"), c("Hypo-M", "Hyper-M")]
+
+# Show the table
+knitr::kable(t) %>%
+kable_styling(bootstrap_options = c("hover"),
+              full_width = FALSE)
+
+# Show fisher test result
+t %>% fisher.test %>% 
+tidy() %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+## Overlap of affected genes
+
+Overlap of ALP genes aging in control and PD samples
+
+```{r, include=TRUE}
+foo <- function(dt, A, B, title) {
+  dt[, table(get(A), get(B))] %>%
+  fisher.test %>%
+  broom::tidy() %>% 
+  mutate(Test = title) %>%
+  dplyr::select(Test, estimate, p.value, conf.low, conf.high)
+}
+
+A <- apax2 %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.DiagnosisControl.Age, 
+    P = P.DiagnosisControl.Age, 
+    Q = p.adjust(P.DiagnosisControl.Age, "fdr"))
+  ] %>%
+  .[, list(HealthyAging = wmean(FC, -log(P)), IsHealthyAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+B <- apax2 %>%
+  .[, list(ID, Chr, SNP, Gene, 
+    FC = C.DiagnosisPD.LBD.Age, 
+    P = P.DiagnosisPD.LBD.Age, 
+    Q = p.adjust(P.DiagnosisPD.LBD.Age, "fdr"))
+  ] %>%
+  .[, list(PDAging = wmean(FC, -log(P)), IsPDAging = any(Q < 0.05, na.rm=TRUE)), Gene]
+
+C  <- apx %>%
+  .[, list(PD = wmean(logFC, -log(P.Value)), IsPD = any(adj.P.Val < 0.05, na.rm=TRUE)), Gene]
+dt <- merge(merge(A, B, by = "Gene"), C, by = "Gene")
+
+list(
+  foo(dt, "IsPD", "IsHealthyAging", title = "PD affected vs aging in controls"),
+  foo(dt, "IsPD", "IsPDAging", title = "PD affected vs aging in PDs"),
+  foo(dt, "IsHealthyAging", "IsPDAging", title = "Aging in controls vs aging in PDs")
+  ) %>%
+purrr::map(as.data.table) %>%
+rbindlist %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+## Age acceleration
+
+If we look into the genes that are aging in both, control and PD samples, can we see some trend in directionality?
+
+```{r, include=TRUE}
+dt[, table(IsHealthyAging=IsHealthyAging==TRUE, IsPDAging = IsPDAging == TRUE)]
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  table(sign(HealthyAging), sign(PDAging))] %>%
+  fisher.test
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  t.test(abs(HealthyAging), abs(PDAging), paired=TRUE)]
+
+
+dt[IsHealthyAging==TRUE & IsPDAging == TRUE, 
+  list(mean(abs(HealthyAging)), mean(abs(PDAging)))]
+
+
+```
+
+```{r}
+# How can I test whether the agreement is more likely at some point?
+
+dt[IsHealthyAging & IsPDAging,
+  table(sign(HealthyAging), sign(PDAging))] %>% 
+  fisher.test()
+
+```
+
+## Enrichment of genomic regions
+
+```{r}
+# touch()
+foo <- function(analysis, prefix, annotations, t) {
+  fits <- fread(glue("../{analysis}/www/{prefix}_{analysis}.csv"))
+  ccol <- glue("C.DiagnosisControl.Age")
+  pcol <- glue("P.DiagnosisControl.Age")
+  fits <- fits[, list(ID, Chr, SNP, Str, 
+                  adj.P.Val = p.adjust(get(pcol), "fdr"),
+                  logFC = get(ccol)
+                  )]
+  dt1 <- getAnnotatrEnrichments(fits, annotations, qThresh = t)
+  dt2 <- getAppendixChipEnrichments(fits, qThresh = t)
+  dt3 <- getEpiRoadmapEnrichment(fits, qThresh = t)
+  dt4 <- getPsychEncodeEnrichments(fits, qThresh = t)
+  return(list(dt1, dt2, dt3, dt4))
+}
+
+# touch()
+analysis <- "Appendix_AgeAcceleration_Padlock_AgeMatched"
+prefix <- "m6"
+t <- 0.05
+
+dtlist <- cache(
+  foo = foo, fname = glue("enrichment_{analysis}_AgeMatched.RDS"), verbose = TRUE,
+  analysis = analysis, prefix= prefix, annotations = annotations,
+  t = t
+  )
+```
+
+
+General annotation of genomic elements:
+
+```{r, include=TRUE}
+dtlist[[1]] %>%
+.[Type == "All"] %>%
+.[, `P < 0.05` := texPstars(`P < 0.05`)] %>%
+dplyr::select(estimate=OR, 
+       p.value=P, 
+       conf.low=Lo, 
+       conf.high=Hi, 
+       category=Category, 
+       p_stars = `P < 0.05`) %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+Genomic elements obtained from ChIP-seq:
+
+```{r, include=TRUE}
+dtlist[[2]] %>%
+.[, `P < 0.05` := texPstars(`P < 0.05`)] %>%
+dplyr::select(estimate=OR, 
+       p.value=P, 
+       conf.low=Lo, 
+       conf.high=Hi, 
+       category=Category, 
+       p_stars = `P < 0.05`) %>%
+kable() %>%
+kable_styling(bootstrap_options = c("hover"))
+```
+
+```{r}
+myplots <- plotAnnotatrEnrichment(dtlist[[1]])
+myplots[[1]] <- myplots[[1]] + facet_grid(Type~.)
+myplots[[2]] <- myplots[[2]] + facet_grid(Type~.)
+
+myplots[[3]] <- plotAppendixChipEnrichment(dtlist[[2]], wrap = "vertical")
+myplots[[4]] <- plotEpiRoadmapEnrichment(  dtlist[[3]], wrap = "vertical")
+```
+
+```{r, include=TRUE, fig.cap="**Figure S18. Genomic elements enriched with differentially methylated cytosines in the healthy aging appendix using only samples older than 62 years.**"}
+ggarrange(myplots[[1]], myplots[[2]], myplots[[3]],
+  ncol = 3, nrow = 1, labels = LETTERS[1:3],
+  widths = c(4, 7, 3),
+  common.legend = TRUE)
+```
+
+
+```{r}
+url <- "../Appendix_AgeAcceleration_Padlock/www/m6_Appendix_AgeAcceleration_Padlock.csv"
+stopifnot(file.exists(url))
+```
+
+**[Additional file 20](`r url`) DNA methylation changes in the aging appendix of healthy individuals and PD patients restricted to those above 62 years of age.**

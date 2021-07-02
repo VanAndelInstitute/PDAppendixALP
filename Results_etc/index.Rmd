@@ -328,7 +328,7 @@ fwrite(dt, "www/geneEnrichment.csv")
 url <- "./www/geneEnrichment.csv"
 ```
 
-- **[Additional File 18](`r url`) Enrichment of genes with significantly differentially modified cytosines and the dominant direction of modification.**
+- **[Additional File 17](`r url`) Enrichment of genes with significantly differentially modified cytosines and the dominant direction of modification.**
 
 
 
@@ -336,7 +336,7 @@ url <- "./www/geneEnrichment.csv"
 
 ```{r}
 studies <- list.files(path = "../", pattern = "*Padlock*|*RNAseq*")
-
+studies <- setdiff(studies, "Appendix_AgeAcceleration_Padlock_AgeMatched")
 res <-
 foreach (study = studies) %do% {
 	message("Loading study: ", study)
@@ -360,17 +360,51 @@ foreach (study = studies) %do% {
 names(res) <- studies
 
 
+# Sample key analysis
+
+formulas <- list(
+  "Diagnosis ~ Age + Sex + PMI + Cohort",
+  "Diagnosis ~ Age + Sex + PMI + RIN",
+  "Diagnosis ~ Age + Sex + PMI + Batch",
+  "Diagnosis ~ Age + Sex + PMI + RIN",
+  "Group ~ AGE + SEX + PMI",
+  "Group ~ Age + Sex + PMI + proportions_GLU",
+  "Group ~ AGE + SEX + PMI",
+  "Group ~ AGE + SEX + PMI",
+  "Group ~ Age + Sex + PMI + proportions_GLU",
+  "Group ~ Age + Sex + PMI + proportions_GLU"
+)
+names(formulas) <- names(res)[1:length(formulas)]
+
+stats <-
+foreach( analysis = names(formulas), .combine=rbind) %do% {
+  formula <- as.formula(formulas[[analysis]])
+  dt <- res[[analysis]]
+  if ("Diagnosis" %in% colnames(dt)) dt[, Diagnosis := as.factor(Diagnosis)]
+  if ("Group" %in% colnames(dt)) dt[, Group := as.factor(Group)]
+  dt %>%
+    glm(formula, data = ., family="binomial")%>% 
+    broom::tidy() %>%
+    mutate(analysis = analysis)
+}
+
+
+
 file <- "www/sampleKey.xlsx"
 unlink(file)
 for (study in studies) {
+  message(study)
 	write.xlsx(res[[study]], file, sheetName=study, 
 	  col.names=TRUE, row.names=FALSE, append=TRUE)
 }
 
+write.xlsx(as.data.frame(stats), file, sheetName = "Covariate stats", 
+  col.names = TRUE, row.names = FALSE, append = TRUE)
+
 url <- "./www/sampleKey.xlsx"
 ```
 
-- **[Additional File 19](`r url`) Demographic and clinical information for human samples.**
+- **[Additional File 18](`r url`) Demographic and clinical information for human samples.**
 
 <!--  -->
 
@@ -384,9 +418,7 @@ url <- "./www/Supplementary Data_primers.xlsx"
 stopifnot(file.exists(url))
 ```
 
-- **[Additional File 20](`r url`) Padlock probe libraries and study primers.**
-
-
+- **[Additional File 19](`r url`) Padlock probe libraries and study primers.**
 
 
 

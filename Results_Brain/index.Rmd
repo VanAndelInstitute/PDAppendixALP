@@ -18,6 +18,9 @@ runtime: shiny_prerendered
 require(broom)
 require(knitr)
 require(RobustRankAggreg)
+require("annotatr")
+require("TxDb.Hsapiens.UCSC.hg19.knownGene")
+require("org.Hs.eg.db")
 source("../code/common.R")
 ```
 
@@ -476,3 +479,462 @@ stopifnot(file.exists(url))
 
 - **[Additional file 8](`r url`) ALP genes consistently epigenetically disrupted across the PD appendix and brain.**
 
+
+# Overlap of appendix and brain
+
+```{r}
+genome <- "hg19"
+annots <- c('hg19_cpgs', 'hg19_basicgenes', 'hg19_genes_intergenic')
+annotations_hg19 <- build_annotations(genome = genome, annotations = annots)
+
+myFisherTest <- function(t) {
+  require(data.table)
+  require(dplyr)
+  tryCatch({
+    exp <- sum(t[2,])/sum(t)
+    obs <- t[2,2] / sum(t[,2])
+    f <- t %>% fisher.test
+    data.table(
+      `Expected, %` = exp,
+      `Obseverd, %` = obs,
+      OR            = f$estimate, 
+      Lo            = f$conf.int[1], 
+      Hi            = f$conf.int[2], 
+      P             = f$p.value,
+      `P < 0.05`    = gtools::stars.pval(f$p.value)
+    )
+  }, error = function(e) { 
+    message(e)
+    return(NULL)
+  })
+}
+
+
+##################################
+# load psychEncode data
+##################################
+loadPsychEncodeChIP <- function() {
+  require("bedr")
+  stopifnot(check.binary("bedtools"))
+  
+  # AC marks
+  dAC <- fread("../input/Enh_Prom/EpiMap_H3K27ac_Neu_sort.txt") %>%
+          setnames(c("Chr", "Start", "End", "Name"))
+  dAC <- 
+    bedr(engine = "bedtools", input = list(i = dAC), method = "merge", 
+        check.zero.based = FALSE, check.chr = FALSE, 
+        check.valid = FALSE, check.merge = FALSE, check.sort = FALSE, 
+        verbose = TRUE)  %>%
+    setDT %>%
+    setnames(c("Chr", "Start", "End")) %>%
+    setkey(Chr, Start, End) %>%
+    .[, ID := paste0(Chr, ":", Start, "-", End)]
+  
+  # ME marks
+  dME <- fread("../input/Enh_Prom/EpiMap_H3K4me3_Neu_sort.txt") %>%
+          setnames(c("Chr", "Start", "End", "Name"))
+  dME <- 
+    bedr(engine = "bedtools", input = list(i = dME), method = "merge", 
+        check.zero.based = FALSE, check.chr = FALSE, 
+        check.valid = FALSE, check.merge = FALSE, check.sort = FALSE, 
+        verbose = TRUE)  %>%
+    setDT %>%
+    setnames(c("Chr", "Start", "End")) %>%
+    setkey(Chr, Start, End) %>%
+    .[, ID := paste0(Chr, ":", Start, "-", End)]
+  return(list(dAC, dME))  
+}
+
+##################################
+# load appendix ChIP data
+##################################
+loadAppendixChIP <- function() {
+  d <- Sys.glob("../input/PD_Padlock_Appendix_ChIP/")
+  fAC <- file.path(d, "ACvsinput_peaks.narrowPeak_IDR0.05_conservative_final.bed")
+  fME <- file.path(d, "MEvsinput_peaks.narrowPeak_IDR0.05_conservative_final.bed")
+
+  # AC marks
+  dAC <- fread(fAC) %>%
+          setnames(c("Chr", "Start", "End", "Name", "Score", "Strand")) %>% 
+          .[, list(Chr, Start, End)] %>%
+          setkey(Chr, Start, End) %>%
+          .[, ID := paste0(Chr, ":", Start, "-", End)]
+  
+  # ME marks
+  dME <- fread(fME) %>%
+          setnames(c("Chr", "Start", "End", "Name", "Score", "Strand")) %>% 
+          .[, list(Chr, Start, End)] %>%
+          setkey(Chr, Start, End) %>%
+          .[, ID := paste0(Chr, ":", Start, "-", End)]
+  return(list(dAC, dME))  
+}
+
+
+##################################
+# annotate fits with marks from ChIP
+##################################
+annotateChIP <- function(myfits, dAC, dME) {
+  ids <- foverlaps(
+    myfits[, list(Chr, Start = SNP, End = SNP, ID)], 
+    dAC, 
+    by.x = c("Chr", "Start", "End"),
+    by.y = c("Chr", "Start", "End")) %>%
+    .[!is.na(Start), ]
+  myfits[match(ids$i.ID, ID), AC := ids$ID]
+
+  ids <- foverlaps(
+    myfits[, list(Chr, Start = SNP, End = SNP, ID)], 
+    dME, 
+    by.x = c("Chr", "Start", "End"),
+    by.y = c("Chr", "Start", "End")) %>%
+    .[!is.na(Start), ]
+  myfits[match(ids$i.ID, ID), ME := ids$ID]
+  
+  # Now mark enhancers and promoters
+  myfits %>%
+    # Promoter is AC only
+    .[, Promoter := ifelse( !is.na(AC) & is.na(ME), AC, NA)] %>%
+    # Poised enhancer is ME only
+    .[, PoisedEnhancer := ifelse( is.na(AC) & !is.na(ME), ME, NA)] %>%
+    # Active enhancer is when both ME and AC are present
+    .[, ActiveEnhancer := ifelse( !is.na(ME) & !is.na(AC), paste(AC, ME), NA)] %>%
+    # Drop unused cols
+    .[, AC := NULL] %>%
+    .[, ME := NULL]
+  return(myfits)
+}  
+  
+##################################
+# annotate fits with genomic elements
+##################################
+
+annotateGenomic <- function(myfits, annotations) {
+  require(GenomicRanges)
+  require(annotatr)
+  require(data.table)
+  fitsgr <- with(myfits, GRanges(seqnames=Chr, IRanges(SNP, SNP)))
+  if (!is.null(myfits$str))
+    strand(fitsgr) <- myfits$str
+  values(fitsgr) <- myfits[, list(ID)]
+  annot <- annotate_regions(
+    regions = fitsgr,
+    annotations = annotations,
+    ignore.strand = TRUE,
+    quiet = FALSE)
+  annot <- data.frame(annot) %>% setDT
+
+  types <- annot[, unique(annot.type)]
+  for (type in types) {
+    X <- annot[annot.type == type, 
+               paste(
+                 ifelse(is.na(annot.symbol[1]), "", annot.symbol[1]), 
+                 annot.id[1]
+                ), ID]
+    setnames(X, "V1", type)
+    myfits <- merge(myfits, 
+          X,
+          all.x = TRUE, 
+          by = "ID")
+  }
+  myfits
+}
+
+##################################
+# annotate all fits
+##################################
+
+g(brainME, brainAC) %=% loadPsychEncodeChIP()
+g(apxME, apxAC) %=% loadAppendixChIP()
+
+# Find overlaps of brain and apx chip
+extendRegions <- function(dt, exby = 2500) {
+  dt <- dt[, list(Chr, Start = Start - exby, End = End + exby, Col = 1)]
+  dt <- bedr(engine = "bedtools", 
+             input = list(i = dt), 
+             method = "merge", 
+             params = "-c 1 -o count",
+             check.zero.based = FALSE, 
+             check.chr = FALSE, 
+             check.valid = FALSE, 
+             check.merge = FALSE, 
+             check.sort = FALSE, 
+             verbose = TRUE)
+  setDT(dt)
+  return(dt)
+}
+giveClusterIDs <- function(X) {
+  curid <- 0
+  X <- X %>% 
+    diff %>%
+    c(0, .)
+  foreach (x = X) %do% {
+    if (x == 0) {
+      curid
+    } else  {
+      curid <- curid + 1
+      curid
+    } 
+  } %>% unlist
+}
+
+
+# aggregate brain and appendix chip
+dtME <- rbind(
+    extendRegions(brainME, exby = 500),
+    extendRegions(apxME, exby = 500)) %>% 
+  setkey(Chr, Start, End)
+dtME <- extendRegions(dtME, exby = 0)
+dtME[, Cluster := giveClusterIDs(Col > 1), Chr]
+dtME <- dtME[Col > 1, list(Start = min(Start), End = max(End)), list(Chr, Cluster)] %>%
+  dplyr::select(-Cluster)
+dtME[, ID := paste0(Chr, ":", Start, "-", End)]
+setkey(dtME, Chr, Start, End)
+
+dtAC <- rbind(
+    extendRegions(brainAC),
+    extendRegions(apxAC)) %>% 
+  setkey(Chr, Start, End)
+dtAC <- extendRegions(dtAC, exby = 0)
+dtAC[, Cluster := giveClusterIDs(Col > 1), Chr]
+dtAC <- dtAC[Col > 1, list(Start = min(Start), End = max(End)), list(Chr, Cluster)] %>%
+  dplyr::select(-Cluster)
+dtAC[, ID := paste0(Chr, ":", Start, "-", End)]
+setkey(dtAC, Chr, Start, End)
+
+data <- list(APX = apx, `PFC` = pfcx, `PFC II` = pfc2x, OFB = ofbx)
+# d <- data[[1]]
+annotated <- withCluster(foreach(d = data ) %dopar% {
+  require(data.table)
+  require(dplyr)
+  dAnno <- copy(d)
+  dAnno <- annotateGenomic(dAnno, annotations_hg19)
+  dAnno <- annotateChIP(dAnno, dtAC, dtME)
+  setnames(dAnno, 
+           c("Promoter", "PoisedEnhancer", "ActiveEnhancer"),
+           c("Pro", "PE", "AE")
+           )
+  dAnno
+}, nNodes = 4)
+names(annotated) <- names(data)
+
+
+##################################
+# Compute overlaps
+##################################
+n <- ncol(annotated[[1]])
+dimensions <- colnames(annotated[[1]])[15:n]
+dt <- withCluster(
+  foreach( brain = names(annotated)[-1], .combine = rbind) %:% 
+  foreach( dim   = dimensions, .combine = rbind) %dopar% {
+    require(data.table)
+    require(dplyr)
+    message(brain, ": ", dim)
+    A <- annotated[[1]]
+    B <- annotated[[brain]]
+  
+    # idsA <- A[order(P.Value)][1:10000, ID]
+    # idsB <- B[order(P.Value)][1:10000, ID]
+    idsA <- A[order(P.Value)][1:5000, ID]
+    idsB <- B[order(P.Value)][1:5000, ID]
+
+    tryCatch({
+      merge(
+        A[!is.na(get(dim)), any(ID %in% idsA), get(dim)],
+        B[!is.na(get(dim)), any(ID %in% idsB), get(dim)],
+        by = "get"
+      ) %>%
+      .[, table(V1.x, V1.y)] %>%
+      myFisherTest() %>%
+        .[, DS := brain] %>%
+        .[, Dimension := dim]    
+    }, error = function(e) {
+      message(e)
+      return(NULL)
+    })
+  }, 
+  nNodes = 5)
+dt[, Type := "All"]
+
+# Same analysis for top hyper-methylated probes
+dtHyper <- withCluster(
+  foreach( brain = names(annotated)[-1], .combine = rbind) %:% 
+  foreach( dim   = dimensions, .combine = rbind) %dopar% {
+    require(data.table)
+    require(dplyr)
+    message(brain, ": ", dim)
+    A <- annotated[[1]]
+    B <- annotated[[brain]]
+  
+    # idsA <- A[order(P.Value)][1:10000, ID]
+    # idsB <- B[order(P.Value)][1:10000, ID]
+    o <- function(s, fc, p) { 
+      order(-1 * sign(s) * sign(fc) * log(p), decreasing=TRUE)
+    }
+    idsA <- A[o(logFC, P.Value, s=1)][1:5000, ID]
+    idsB <- B[o(logFC, P.Value, s=1)][1:5000, ID]
+
+    tryCatch({
+      merge(
+        A[!is.na(get(dim)), any(ID %in% idsA), get(dim)],
+        B[!is.na(get(dim)), any(ID %in% idsB), get(dim)],
+        by = "get"
+      ) %>%
+      .[, table(V1.x, V1.y)] %>%
+      myFisherTest() %>%
+        .[, DS := brain] %>%
+        .[, Dimension := dim]    
+    }, error = function(e) {
+      message(e)
+      return(NULL)
+    })
+  }, 
+  nNodes = 5)
+dtHyper[, Type := "Hyper"]
+
+# Same analysis for top hypo-methylated probes
+dtHypo <- withCluster(
+  foreach( brain = names(annotated)[-1], .combine = rbind) %:% 
+  foreach( dim   = dimensions, .combine = rbind) %dopar% {
+    require(data.table)
+    require(dplyr)
+    message(brain, ": ", dim)
+    A <- annotated[[1]]
+    B <- annotated[[brain]]
+  
+    # idsA <- A[order(P.Value)][1:10000, ID]
+    # idsB <- B[order(P.Value)][1:10000, ID]
+    o <- function(s, fc, p) { 
+      order(-1 * sign(s) * sign(fc) * log(p), decreasing=TRUE)
+    }
+    idsA <- A[o(logFC, P.Value, s=-1)][1:5000, ID]
+    idsB <- B[o(logFC, P.Value, s=-1)][1:5000, ID]
+
+    tryCatch({
+      merge(
+        A[!is.na(get(dim)), any(ID %in% idsA), get(dim)],
+        B[!is.na(get(dim)), any(ID %in% idsB), get(dim)],
+        by = "get"
+      ) %>%
+      .[, table(V1.x, V1.y)] %>%
+      myFisherTest() %>%
+        .[, DS := brain] %>%
+        .[, Dimension := dim]    
+    }, error = function(e) {
+      message(e)
+      return(NULL)
+    })
+  }, 
+  nNodes = 5)
+dtHypo[, Type := "Hypo"]
+
+
+##################################
+# Plot
+##################################
+plot_pC <- function(dt) {
+  pd <- copy(dt)
+  pd[grepl("hg19_genes", Dimension), Group := "1.Genes"]
+  pd[grepl("hg19_cpg", Dimension), Group := "2.CpG Islands"]
+  # pd[grepl("Apx", Dimension), Group := "4.Appendix\nChIP-seq"]
+  # pd[grepl("Brain", Dimension), Group := "3.PsychEncode\nChIP-seq"]
+  pd[is.na(Group), Group := "3.Appendix + PsychEncode\nChIP-seq"]
+  pd[, Dimension := gsub("hg19_|cpg_|genes_", "", Dimension) %>% Hmisc::capitalize()]
+  pd[, Dimension := gsub("Apx|Brain", "", Dimension)]
+  pd[, Dimension := gsub("PE", "Poised Enh", Dimension)]
+  pd[, Dimension := gsub("Pro$", "Active Promoter", Dimension)]
+  pd[, Dimension := gsub("AE", "Active Enh", Dimension)]
+  pd[, Dimension := gsub("Inter$", "Open Sea", Dimension)]
+  pd[, OR := log(OR)]
+  pd[, Lo := log(Lo)]
+  pd[, Hi := log(Hi)]
+  pd[, Shape := ifelse(P < 0.05, "P < 0.05", "P > 0.05")]
+  pd[, Stars := ""]
+  pd[P < 0.05, Stars := "*"]
+  pd[P < 0.01, Stars := "**"]
+  pd[P < 0.001, Stars := "***"]
+
+  # Deal with ordering
+  pd$Group <- factor(pd$Group)
+  levels(pd$Group) <- levels(pd$Group) %>% gsub("[1-4]\\.", "", .)
+
+  pd$Dimension <- factor(pd$Dimension, levels = 
+                c("Intergenic", "1to5kb", "Promoters", "5UTRs", "Exons", "Introns", "3UTRs",
+                "Active Enh", "Poised Enh", "Active Promoter",
+                "Open Sea", "Shelves", "Shores", "Islands"))
+  pd$DS <- factor(pd$DS, levels = c("APX", "PFC", "PFC II", "OFB"))
+  mycolors <- c(APX="#7570b3", OFB="#e7298a", `PFC II`="#66a61e", PFC="#e6ab02")
+
+  ggplot(pd, aes(Dimension, OR, group=DS, color=DS,
+                 ymin=Lo, ymax=Hi, shape = Shape)) + 
+    geom_point(
+      size = 1.5,
+      position=position_dodge(width=0.75)
+    ) + 
+    geom_errorbar(
+      width=0.5, size = 0.25, color = "grey",
+      position=position_dodge(width=0.75)
+    ) + 
+    geom_hline(yintercept = 0, color = "grey50", size = 0.25) +
+    geom_text(
+      aes(label = Stars, y = Hi), color = "black",
+      parse = FALSE, size = 2.2, hjust = -0.5, vjust = 0.75,
+      position=position_dodge(width=0.75)
+      ) +
+    #ylim(-0.5, 2.1) + 
+    facet_wrap(~Group, ncol=4, scales="free_y") + 
+    ylab("Odds ratio, log") +
+    scale_shape_manual("", values = c(16, 1), guide = FALSE) + 
+    scale_color_manual("Dataset", values = mycolors, drop=FALSE) + 
+    theme_publication() +
+    coord_flip() +
+    guides(shape = FALSE) + 
+    theme(
+      axis.title.y = element_blank())
+
+}
+
+theme_publication <- function(font = 7) {
+  theme(
+    text = element_text(family = "Helvetica", size = font, color = "black"),
+    plot.title = element_text(size = font, color = "black"),
+    
+    panel.background = element_rect(fill = "transparent", colour = NA),
+    panel.border = element_blank(),
+    plot.background = element_rect(fill = "transparent", colour = NA),
+    
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    
+    axis.line = element_line(color = "black"),
+    axis.text = element_text(size = font, color = "black"), 
+    axis.ticks = element_line(size = 0.3, color = "black"),
+    axis.title = element_text(size = font, color = "black"),
+    
+    # strip.background = element_rect(color = "white", fill = "white"),
+    strip.text.x = element_text(size = font, color = "black"),
+    strip.text.y = element_text(size = font, color = "black"),
+    
+    legend.background = element_rect(
+      fill = alpha("white", 0),
+      color = alpha("white", 0)
+    ),
+    legend.key = element_rect(color = NA, fill = NA),
+    legend.key.size = unit(0.2, "cm"),    
+    legend.text = element_text(size = font)
+  )
+}
+
+pC <- plot_pC(dt)
+pCHyper <- plot_pC(dtHyper)+ggtitle("Hyper-methylation")
+pCHypo <- plot_pC(dtHypo)+ggtitle("Hypo-methylation")
+saveRDS(pC, "pC.RDS")
+```
+
+```{r, include=TRUE, fig.width=7.2, fig.height=4, fig.cap="**Figure S19. Genomic elements exhibiting similar changes in DNA methylation in the PD brain and PD appendix stratified by the direction of methylation change.**"}
+require("cowplot")
+ggdraw() +
+  draw_plot(pCHyper + theme(legend.position = "none"),
+            x = 0, y = 0.55, width = 1, height = 0.45) +
+  draw_plot(pCHypo + theme(legend.position = "bottom"),
+            x = 0, y = 0, width = 1, height = 0.55)
+```
