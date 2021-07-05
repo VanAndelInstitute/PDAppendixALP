@@ -515,7 +515,7 @@ pG <-
       data = function(x) x[Gene %in% geneList],
       ylim = c(0.05, Inf), force=10,
       nudge_y = 0.01, segment.size = 0.25,
-      size = 2.2,
+      size = 2.2, fontface = "italic", 
       aes(label = Gene)
       ) + 
   ylab("Age effect,\nmean M-value/year") +
