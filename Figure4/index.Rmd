@@ -248,7 +248,8 @@ pC <-
   theme(
     axis.line.y = element_blank(),
     axis.title.x = element_blank(),
-    axis.title.y = element_blank())
+    axis.title.y = element_blank(),
+    axis.text.y = element_text(face = "italic"))
 
 # pC <-
 # pd[, list(Gene, Width, EPFC, EAPX)] %>% 
@@ -440,7 +441,7 @@ pF <-
       data = function(x) x[Gene %in% geneList],
       nudge_y = 0.05, segment.size = 0.25,
       ylim = c(0.07, Inf), force=10,
-      size = 2.2,
+      size = 2.2, fontface = "italic",
       aes(label = Gene)
       ) + 
   ylab("Age effect,\nmean M-value/year") + 
