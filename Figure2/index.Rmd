@@ -159,7 +159,7 @@ pA <- function() {
   
   o <- with(bed3, order(Chr %>% gsub("chr", "", .) %>% as.numeric, Start))
   circos.genomicLabels(bed3[o,], labels.column = 4, 
-                       side = "inside", cex = 0.5,
+                       side = "inside", cex = 0.5, font = 3,
                        col = bed3[o, Type], padding = 2, 
                        labels_height = 0.1,
                        connection_height = 0.1)
