@@ -219,7 +219,8 @@ pA <-
     guides(color = FALSE, shape = FALSE) +
     # Add labels
     geom_point(data=pd[Label == TRUE], color="orange", size=1.3) +
-    geom_label_repel(data=pd[Label == TRUE], aes(label=Gene), size=2.2) +
+    geom_label_repel(data=pd[Label == TRUE], aes(label=Gene), 
+      fontface = "italic", size=2.2) +
     # Label the axes
     xlab("Chromosome") + 
     ylab("Signed log p") + 
