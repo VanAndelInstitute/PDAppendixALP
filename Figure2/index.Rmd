@@ -195,7 +195,7 @@ pd <- list(
 pd[, OR := format(OR, digits=3)]
 pd[, P := format(P, digits=3, scientific=TRUE)]
 pd[, P := gsub("e", "~x~10^", P)]
-pd[, Label := paste0("\"p=\"~", P)]
+pd[, Label := paste0("\"p =\"~", P)]
 
 pB <- 
   ggplot(pd, aes(Sign, F, 

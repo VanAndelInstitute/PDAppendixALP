@@ -427,7 +427,7 @@ suppressWarnings(
 	    x = 0.28, y = -0.02,  width = .3, height = .65) +
 	  draw_plot(legend, x = 0.235, y = 0.41, width = 0.2, height = 0.2) +
 	  draw_plot_label(
-	    label = c("a", "b", "c", "d", "r"), 
+	    label = c("a", "b", "c", "d", "e"), 
 	    size = 10,
 	    x = c(0, 0.7, 0, 0.3, 0.58), 
 	    y = c(1, 1,   0.63, 0.63, 0.63))

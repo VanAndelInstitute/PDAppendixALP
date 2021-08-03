@@ -476,9 +476,11 @@ computeEnrichment <- function(data, targetGenes) {
 		foreach( target = dt[, unique(Type)]) %do% {
 			foreach( bracket = brackets) %do% {
 				tryCatch({
+          n <- dt[Type == target, table(Bracket == bracket, adj.P.Val < 0.05), .N]
 					dt[Type == target, table(Bracket == bracket, adj.P.Val < 0.05)] %>%
 					fisher.test %>%
 					broom::tidy() %>%
+          mutate(N = n) %>%
 					setDT %>%
 					.[, Bracket := bracket]		
 				}, error = function(e) {
@@ -505,7 +507,7 @@ computeEnrichment <- function(data, targetGenes) {
 		} %>%
 		rbindlist(fill=TRUE) %>% 
 		.[, Target := "All"]
-	pd <- rbind(pd, pd2)
+	pd <- rbind(pd, pd2, fill=TRUE)
 	pd[, Q := p.adjust(p.value, "fdr")]
 	pd[Q < 0.05]
 	return(pd)
